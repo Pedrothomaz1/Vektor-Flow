@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProgressBar } from "@/components/okr/ProgressBar";
 import type { TreeNode } from "@/hooks/useOKRTree";
 
@@ -286,9 +287,39 @@ interface OKROrgChartProps {
 
 export function OKROrgChart({ tree }: OKROrgChartProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const allIds = useMemo(() => collectIds(tree), [tree]);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  // Filter tree by objective_type, keeping ancestors of matching nodes
+  const filteredTree = useMemo(() => {
+    if (typeFilter === "all") return tree;
+    const filter = (nodes: TreeNode[]): TreeNode[] =>
+      nodes
+        .map((n) => {
+          const children = filter(n.children);
+          if (n.objective.objective_type === typeFilter || children.length > 0) {
+            return { ...n, children };
+          }
+          return null;
+        })
+        .filter(Boolean) as TreeNode[];
+    return filter(tree);
+  }, [tree, typeFilter]);
+
+  const availableTypes = useMemo(() => {
+    const set = new Set<string>();
+    const walk = (nodes: TreeNode[]) => {
+      for (const n of nodes) {
+        if (n.objective.objective_type) set.add(n.objective.objective_type);
+        walk(n.children);
+      }
+    };
+    walk(tree);
+    return Array.from(set);
+  }, [tree]);
+
+  const allIds = useMemo(() => collectIds(filteredTree), [filteredTree]);
   // Start collapsed — only root nodes visible
-  const rootIds = useMemo(() => tree.map((n) => n.objective.id), [tree]);
+  const rootIds = useMemo(() => filteredTree.map((n) => n.objective.id), [filteredTree]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(rootIds));
   const allExpanded = expandedIds.size >= allIds.length;
 
@@ -296,11 +327,11 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
     (query: string) => {
       setSearchQuery(query);
       if (query.trim()) {
-        const matching = collectMatchingIds(tree, query.trim());
+        const matching = collectMatchingIds(filteredTree, query.trim());
         setExpandedIds(new Set(matching));
       }
     },
-    [tree]
+    [filteredTree]
   );
 
   const handleToggle = useCallback((id: string) => {
@@ -337,6 +368,17 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
             className="pl-8 h-8 text-xs"
           />
         </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="h-8 text-xs w-[160px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            {availableTypes.map((t) => (
+              <SelectItem key={t} value={t}>{typeLabel[t] || t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExpandAll}>
           {allExpanded ? "Colapsar tudo" : "Expandir tudo"}
         </Button>
@@ -344,7 +386,7 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
 
       <div className="overflow-auto pb-4 max-h-[calc(100vh-260px)] touch-pan-x touch-pan-y">
         <div className="flex gap-4 md:gap-6 justify-center py-2 px-2 flex-wrap">
-          {tree.map((node) => (
+          {filteredTree.map((node) => (
             <OrgNode
               key={node.objective.id}
               node={node}
