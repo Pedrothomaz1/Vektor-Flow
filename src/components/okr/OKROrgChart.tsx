@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/okr/ProgressBar";
 import { BUFilter } from "@/components/common/BUFilter";
+import { useBusinessUnits } from "@/hooks/useBusinessUnits";
 import type { TreeNode } from "@/hooks/useOKRTree";
 
 const statusLabel: Record<string, string> = {
@@ -288,6 +289,8 @@ interface OKROrgChartProps {
 export function OKROrgChart({ tree }: OKROrgChartProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [buFilter, setBuFilter] = useState<string>("all");
+  const { businessUnits } = useBusinessUnits();
+  const showBUFilter = businessUnits.length > 1;
 
   // Filter tree by business_unit_id, keeping ancestors of matching nodes
   const filteredTree = useMemo(() => {
@@ -358,7 +361,9 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
             className="pl-8 h-8 text-xs"
           />
         </div>
-        <BUFilter value={buFilter} onValueChange={setBuFilter} className="h-8 text-xs w-[200px]" />
+        {showBUFilter && (
+          <BUFilter value={buFilter} onValueChange={setBuFilter} className="h-8 text-xs w-[200px]" />
+        )}
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExpandAll}>
           {allExpanded ? "Colapsar tudo" : "Expandir tudo"}
         </Button>
