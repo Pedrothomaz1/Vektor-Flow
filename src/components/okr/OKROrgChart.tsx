@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProgressBar } from "@/components/okr/ProgressBar";
+import { BUFilter } from "@/components/common/BUFilter";
 import type { TreeNode } from "@/hooks/useOKRTree";
 
 const statusLabel: Record<string, string> = {
@@ -287,35 +287,25 @@ interface OKROrgChartProps {
 
 export function OKROrgChart({ tree }: OKROrgChartProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [buFilter, setBuFilter] = useState<string>("all");
 
-  // Filter tree by objective_type, keeping ancestors of matching nodes
+  // Filter tree by business_unit_id, keeping ancestors of matching nodes
   const filteredTree = useMemo(() => {
-    if (typeFilter === "all") return tree;
+    if (buFilter === "all") return tree;
+    const matches = (buId: string | null | undefined) =>
+      buFilter === "none" ? !buId : buId === buFilter;
     const filter = (nodes: TreeNode[]): TreeNode[] =>
       nodes
         .map((n) => {
           const children = filter(n.children);
-          if (n.objective.objective_type === typeFilter || children.length > 0) {
+          if (matches(n.objective.business_unit_id) || children.length > 0) {
             return { ...n, children };
           }
           return null;
         })
         .filter(Boolean) as TreeNode[];
     return filter(tree);
-  }, [tree, typeFilter]);
-
-  const availableTypes = useMemo(() => {
-    const set = new Set<string>();
-    const walk = (nodes: TreeNode[]) => {
-      for (const n of nodes) {
-        if (n.objective.objective_type) set.add(n.objective.objective_type);
-        walk(n.children);
-      }
-    };
-    walk(tree);
-    return Array.from(set);
-  }, [tree]);
+  }, [tree, buFilter]);
 
   const allIds = useMemo(() => collectIds(filteredTree), [filteredTree]);
   // Start collapsed — only root nodes visible
@@ -368,17 +358,7 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
             className="pl-8 h-8 text-xs"
           />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="h-8 text-xs w-[160px]">
-            <SelectValue placeholder="Tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            {availableTypes.map((t) => (
-              <SelectItem key={t} value={t}>{typeLabel[t] || t}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <BUFilter value={buFilter} onValueChange={setBuFilter} className="h-8 text-xs w-[200px]" />
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExpandAll}>
           {allExpanded ? "Colapsar tudo" : "Expandir tudo"}
         </Button>
