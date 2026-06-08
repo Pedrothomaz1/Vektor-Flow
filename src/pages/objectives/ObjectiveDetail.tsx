@@ -317,7 +317,7 @@ export default function ObjectiveDetail() {
               );
             })()}
           </div>
-          {canEditObj && (
+          {canCreateKr && (
             <Button variant="cta" size="sm" onClick={() => setKrFormOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Novo KR
             </Button>
