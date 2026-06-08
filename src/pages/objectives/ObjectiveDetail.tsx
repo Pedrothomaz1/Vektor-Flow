@@ -90,6 +90,9 @@ export default function ObjectiveDetail() {
   const canEditObj = (isObjOwner || isPrivileged) && (!isCycleLocked || activeApproval);
   const canEditKr = (kr: KeyResult) => (kr.owner_id === user?.id || isPrivileged) && (!isCycleLocked || activeApproval);
   const canCheckinKr = (kr: KeyResult) => kr.owner_id === user?.id || isPrivileged;
+  // Qualquer usuário com acesso à BU do objetivo pode criar KRs (e atribuir a outra pessoa da BU).
+  // Se o objetivo carregou via RLS, o usuário já tem acesso à BU.
+  const canCreateKr = !!obj && (!isCycleLocked || activeApproval);
 
   // Find the active approval's expiry for banner
   const activeApprovalCr = changeRequests.find(
