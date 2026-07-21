@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { AuthBrandingPanel } from "@/pages/Login";
+import { safeNextParam } from "@/lib/safe-next";
 
 const resetSchema = z.object({
   password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres"),
@@ -82,7 +83,9 @@ export default function ResetPassword() {
         return;
       }
       toast({ title: "Senha redefinida com sucesso!" });
-      navigate("/login");
+      const next = safeNextParam();
+      if (next) window.location.href = next;
+      else navigate("/login");
     } finally {
       setIsLoading(false);
     }

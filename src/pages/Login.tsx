@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, type LoginFormValues } from "@/lib/validations";
+import { safeNextParam } from "@/lib/safe-next";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,11 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState("");
+  const next = safeNextParam();
+  const goNext = () => {
+    if (next) window.location.href = next;
+    else navigate("/");
+  };
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -97,7 +103,7 @@ export default function Login() {
         setMfaFactorId(verifiedFactors[0].id);
         setMfaRequired(true);
       } else {
-        navigate("/");
+        goNext();
       }
     } finally {
       setIsLoading(false);
@@ -105,7 +111,7 @@ export default function Login() {
   };
 
   if (mfaRequired) {
-    return <MFAVerify factorId={mfaFactorId} onSuccess={() => navigate("/")} />;
+    return <MFAVerify factorId={mfaFactorId} onSuccess={goNext} />;
   }
 
   return (
