@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://hmvipnpfejduneusoekn.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "vektorflow-mcp",
+      "version": "0.1.0",
+      "title": "Vektor Flow MCP"
+    },
+    "tools": [
+      {
+        "name": "whoami",
+        "title": "Who am I",
+        "description": "Return the signed-in user's profile, roles, and Business Units.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_cycles",
+        "title": "List OKR cycles",
+        "description": "List OKR cycles visible to the signed-in user (respects Business Unit scope).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "active",
+                "closed"
+              ],
+              "description": "Optional cycle status filter."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_objectives",
+        "title": "List objectives",
+        "description": "List OKR objectives the signed-in user can see. Filter by cycle and/or owner.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cycle_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "owner_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filter to objectives owned by this user."
+            },
+            "only_mine": {
+              "type": "boolean",
+              "description": "Only objectives owned by the caller."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_objective",
+        "title": "Get objective with KRs",
+        "description": "Fetch a single objective by id together with its key results and immediate child objectives.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "objective_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "objective_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_initiatives",
+        "title": "List initiatives",
+        "description": "List initiatives visible to the signed-in user. Filter by cycle, owner, or completion state.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cycle_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "owner_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "only_mine": {
+              "type": "boolean"
+            },
+            "completed": {
+              "type": "boolean",
+              "description": "If true, only completed initiatives; if false, only open ones."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_kr_checkin",
+        "title": "Create key result check-in",
+        "description": "Register a check-in on a key result with the current value. Progress propagates to the parent objectives.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key_result_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "value": {
+              "type": "number",
+              "description": "New current value for the key result."
+            },
+            "sentiment": {
+              "type": "string",
+              "enum": [
+                "on_track",
+                "at_risk",
+                "off_track"
+              ]
+            },
+            "impediments": {
+              "type": "string"
+            },
+            "comment": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key_result_id",
+            "value"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
