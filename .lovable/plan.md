@@ -1,19 +1,14 @@
-## Objetivo
-Adicionar um filtro de "Canal" (Board, etc.) na barra de filtros da tela de Iniciativas (`/initiatives`), ao lado dos filtros de BU, Responsável e Status.
+## Transferência de OKRs
 
-## Mudanças
+Encontrei 2 usuários chamados "Pedro Eduardo Thomaz". Apenas um possui OKRs:
+- **pedro@porveri.com.br** — 6 objetivos
 
-**Arquivo:** `src/pages/initiatives/InitiativesList.tsx`
+Vou transferir esses 6 objetivos para **fabiana.andrade@porveri.com.br** (Fabiana Andrade).
 
-1. Adicionar estado `filterCanal` (string, default `"all"`).
-2. Calcular `uniqueCanais` via `useMemo` extraindo valores distintos de `initiatives[].canal` (ignorando vazios), ordenados alfabeticamente.
-3. Adicionar um `<Select>` na seção de filtros com:
-   - Opção "Todos os canais" (`all`)
-   - Opção "Sem canal" para iniciativas com canal vazio/null
-   - Lista dinâmica dos canais existentes
-4. Incluir o filtro na função `filtered` (useMemo): pular iniciativas cujo `canal` não bate com `filterCanal`.
+### O que será feito
+- Atualizar `owner_id` dos 6 objetivos de Pedro (`pedro@porveri.com.br`) para o id da Fabiana.
 
-## Observações
-- Filtro é dinâmico: popula automaticamente conforme novos canais aparecem nos dados (Board, Marketing, etc.).
-- Sem mudança de schema, hook ou backend — apenas UI/presentation.
-- Mantém o padrão visual dos filtros existentes (largura `w-[200px]`, mesmo estilo de `Select`).
+### Observações
+- Apenas o campo `owner_id` da tabela `objectives` será alterado.
+- Key Results (que têm dono próprio) e Iniciativas **não** serão transferidos — apenas os OKRs (objetivos). Se quiser incluí-los, me avise.
+- O outro Pedro (pedrothomaz1@gmail.com) não possui OKRs, então nada muda para ele.
