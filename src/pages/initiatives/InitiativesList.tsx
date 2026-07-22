@@ -27,6 +27,10 @@ import { formatValue, computeStatus, daysLate, STATUS_DISPLAY, parseLocalDate } 
 import InitiativeForm from "./InitiativeForm";
 import InlineProgress from "@/components/initiatives/InlineProgress";
 import InitiativeActions from "@/components/initiatives/InitiativeActions";
+import InitiativeTimeline from "@/components/initiatives/InitiativeTimeline";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { BUFilter } from "@/components/common/BUFilter";
 import { BUBadge } from "@/components/common/BUBadge";
 
@@ -46,6 +50,7 @@ export default function InitiativesList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Initiative | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [commentsTarget, setCommentsTarget] = useState<Initiative | null>(null);
 
   // Filters
   const [filterOwner, setFilterOwner] = useState<string>("all");
@@ -329,6 +334,7 @@ export default function InitiativesList() {
                           expired={false}
                           onEdit={() => { setEditing(init); setFormOpen(true); }}
                           onDelete={() => setDeleteTarget(init.id)}
+                          onComments={() => setCommentsTarget(init)}
                         />
                       </TableCell>
                     </TableRow>
@@ -360,6 +366,22 @@ export default function InitiativesList() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={!!commentsTarget} onOpenChange={(o) => !o && setCommentsTarget(null)}>
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-left">
+                Comentários
+                {commentsTarget && (
+                  <span className="block text-sm font-normal text-muted-foreground mt-1">
+                    {commentsTarget.action}
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            {commentsTarget && <InitiativeTimeline initiativeId={commentsTarget.id} />}
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
