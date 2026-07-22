@@ -374,6 +374,38 @@ export type Database = {
           },
         ]
       }
+      initiative_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          initiative_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          initiative_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          initiative_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "initiative_comments_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       initiatives: {
         Row: {
           action: string
