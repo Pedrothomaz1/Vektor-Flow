@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -13,11 +13,15 @@ interface Props {
   expired: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onComments: () => void;
 }
 
-export default function InitiativeActions({ canManage, isAdmin, isOwner, expired, onEdit, onDelete }: Props) {
+export default function InitiativeActions({ canManage, isAdmin, isOwner, expired, onEdit, onDelete, onComments }: Props) {
   return (
     <div className="flex gap-1">
+      <Button size="icon" variant="ghost" onClick={onComments} title="Comentários">
+        <MessageSquare className="h-4 w-4" />
+      </Button>
       {(canManage || isOwner) && (
         <Tooltip>
           <TooltipTrigger asChild>
