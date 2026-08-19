@@ -110,11 +110,33 @@ export default function ObjectiveDetail() {
     );
   }
 
+  // Reescala proporcionalmente os pesos dos demais KRs para que o total feche 100%
+  const rescaleOthers = (newWeight: number, excludeKrId?: string) => {
+    const others = keyResults.filter((kr) => kr.id !== excludeKrId);
+    if (others.length === 0) return;
+    const othersSum = others.reduce((s, kr) => s + (kr.weight ?? 1), 0);
+    if (othersSum + newWeight <= 100 || othersSum <= 0) return;
+
+    const available = Math.max(0, 100 - newWeight);
+    const scaled = others.map((kr) => Math.max(1, Math.round(((kr.weight ?? 1) * available) / othersSum)));
+    // Ajusta o resto no último KR para fechar exatamente o disponível
+    const diff = available - scaled.reduce((s, w) => s + w, 0);
+    scaled[scaled.length - 1] = Math.max(1, scaled[scaled.length - 1] + diff);
+
+    others.forEach((kr, i) => {
+      if (scaled[i] !== kr.weight) updateKeyResult.mutate({ id: kr.id, weight: scaled[i] });
+    });
+  };
+
   const handleCreateKr = (values: any) => {
     createKeyResult.mutate(
       { ...values, objective_id: id! },
       {
-        onSuccess: () => { setKrFormOpen(false); toast({ title: "Key Result criado" }); },
+        onSuccess: () => {
+          setKrFormOpen(false);
+          rescaleOthers(Number(values.weight) || 1);
+          toast({ title: "Key Result criado" });
+        },
         onError: (e) => toast({ title: "Erro", description: String(e), variant: "destructive" }),
       }
     );
@@ -122,10 +144,15 @@ export default function ObjectiveDetail() {
 
   const handleUpdateKr = (values: any) => {
     if (!editingKr) return;
+    const krId = editingKr.id;
     updateKeyResult.mutate(
-      { id: editingKr.id, ...values },
+      { id: krId, ...values },
       {
-        onSuccess: () => { setEditingKr(null); toast({ title: "Key Result atualizado" }); },
+        onSuccess: () => {
+          setEditingKr(null);
+          rescaleOthers(Number(values.weight) || 1, krId);
+          toast({ title: "Key Result atualizado" });
+        },
         onError: (e) => toast({ title: "Erro", description: String(e), variant: "destructive" }),
       }
     );
