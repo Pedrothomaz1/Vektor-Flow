@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -42,7 +41,14 @@ const krTypes = [
   { value: "boolean", label: "Sim/Não" },
 ];
 
-function buildDefaults(defaultValues?: Partial<KeyResult>): FormValues {
+function suggestWeight(existingWeights: number[]): number {
+  const sum = existingWeights.reduce((s, w) => s + w, 0);
+  const remaining = 100 - sum;
+  if (remaining >= 1) return Math.round(remaining);
+  return Math.max(1, Math.round(100 / (existingWeights.length + 1)));
+}
+
+function buildDefaults(defaultValues?: Partial<KeyResult>, existingWeights: number[] = []): FormValues {
   return {
     title: defaultValues?.title || "",
     description: defaultValues?.description || "",
@@ -51,23 +57,26 @@ function buildDefaults(defaultValues?: Partial<KeyResult>): FormValues {
     target_value: defaultValues?.target_value ?? 100,
     current_value: defaultValues?.current_value ?? 0,
     unit: defaultValues?.unit || "",
-    weight: (defaultValues as any)?.weight ?? 1,
+    weight: (defaultValues as any)?.weight ?? suggestWeight(existingWeights),
     owner_id: defaultValues?.owner_id || "",
   };
 }
 
 export function KeyResultForm({ open, onOpenChange, onSubmit, defaultValues, isPending, existingWeights = [] }: KeyResultFormProps) {
-  const { toast } = useToast();
   const { data: profiles = [] } = useProfiles();
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: buildDefaults(defaultValues),
+    defaultValues: buildDefaults(defaultValues, existingWeights),
   });
 
   useEffect(() => {
-    if (open) reset(buildDefaults(defaultValues));
+    if (open) reset(buildDefaults(defaultValues, existingWeights));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultValues?.id]);
+
+  const othersSum = existingWeights.reduce((s, w) => s + w, 0);
+  const currentWeight = Number(watch("weight")) || 0;
+  const willRedistribute = othersSum + currentWeight > 100;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,18 +84,7 @@ export function KeyResultForm({ open, onOpenChange, onSubmit, defaultValues, isP
         <DialogHeader>
           <DialogTitle>{defaultValues?.id ? "Editar Key Result" : "Novo Key Result"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit((values) => {
-          const othersSum = existingWeights.reduce((s, w) => s + w, 0);
-          if (othersSum + values.weight > 100) {
-            toast({
-              title: "Peso excede 100%",
-              description: `Disponível: ${Math.max(0, 100 - othersSum)}%. Reduza o peso para continuar.`,
-              variant: "destructive",
-            });
-            return;
-          }
-          onSubmit(values);
-        })} className="space-y-4">
+        <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
           <div>
             <Label htmlFor="kr-title">Título</Label>
             <Input id="kr-title" {...register("title")} />
@@ -128,11 +126,16 @@ export function KeyResultForm({ open, onOpenChange, onSubmit, defaultValues, isP
               {errors.weight && <p className="text-xs text-destructive mt-1">{errors.weight.message}</p>}
               {existingWeights.length > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Disponível: {Math.max(0, 100 - existingWeights.reduce((s, w) => s + w, 0))}%
+                  Disponível: {Math.max(0, 100 - othersSum)}%
                 </p>
               )}
             </div>
           </div>
+          {willRedistribute && (
+            <p className="text-xs text-warning">
+              Os pesos dos demais KRs serão ajustados proporcionalmente para que o total volte a 100%.
+            </p>
+          )}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="kr-start">Início</Label>
