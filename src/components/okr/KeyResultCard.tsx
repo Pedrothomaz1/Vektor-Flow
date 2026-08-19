@@ -23,7 +23,7 @@ interface KeyResultCardProps {
 function computeProgress(kr: KeyResult): number {
   const range = kr.target_value - kr.start_value;
   if (range === 0) return 0;
-  return Math.min(100, Math.max(0, ((kr.current_value - kr.start_value) / range) * 100));
+  return Math.max(0, ((kr.current_value - kr.start_value) / range) * 100);
 }
 
 export function KeyResultCard({ kr, onEdit, onDelete, canEdit = true, canCheckin = true }: KeyResultCardProps) {
