@@ -1,40 +1,50 @@
-# Timeline de comentários em iniciativas
+# Anexos em Key Results
 
-Adicionar seção de comentários em cada iniciativa, exibida como timeline cronológica. Qualquer usuário com acesso à BU da iniciativa pode postar; comentários são imutáveis (sem editar/excluir).
+Permitir upload de arquivos em cada KR, listados no card do KR. Envio e exclusão restritos a quem pode editar o KR (dono, admin, okr_master, respeitando ciclo travado).
 
-## Backend (migração)
+## Backend
 
-Nova tabela `public.initiative_comments`:
+Novo bucket privado `kr-attachments` (arquivos servidos por URL assinada).
+
+Nova tabela `public.kr_attachments`:
 - `id uuid pk`
-- `initiative_id uuid → initiatives(id) on delete cascade`
-- `author_id uuid → auth.users(id)`
-- `content text not null` (validar tamanho 1–2000)
-- `created_at timestamptz default now()`
-- índice por `(initiative_id, created_at)`
+- `key_result_id uuid → key_results(id) on delete cascade`
+- `storage_path text not null` (`{key_result_id}/{uuid}-{nome}`)
+- `file_name text not null`, `file_size bigint`, `content_type text`
+- `uploaded_by uuid`, `created_at timestamptz default now()`
+- índice em `key_result_id`
 
-GRANTs para `authenticated` e `service_role`. RLS habilitado com políticas:
-- **SELECT**: usuário enxerga se enxerga a iniciativa (via `user_can_see_bu` sobre `initiatives.business_unit_id`).
-- **INSERT**: `author_id = auth.uid()` E mesma checagem de BU da iniciativa.
-- **UPDATE/DELETE**: nenhuma política (imutáveis por padrão).
+GRANTs para `authenticated` e `service_role`. RLS:
+- SELECT: quem já enxerga o KR (via objetivo → `user_can_see_bu`).
+- INSERT/DELETE: dono do KR, admin ou okr_master.
+- UPDATE: nenhuma política.
+
+Políticas em `storage.objects` para o bucket, espelhando as mesmas regras (primeiro segmento do path = `key_result_id`).
 
 ## Frontend
 
-Novo hook `src/hooks/useInitiativeComments.ts`:
-- `list(initiativeId)` via React Query, faz join manual com `profiles_public` (padrão já usado em `useActivityComments`) para pegar `full_name` e `avatar_url`.
-- `addComment({ initiative_id, content })` mutation, invalida a query.
+Novo hook `src/hooks/useKRAttachments.ts`:
+- `list(keyResultId)` via React Query.
+- `upload(file)`: valida tamanho (máx. 10MB), envia ao Storage e insere a linha na tabela.
+- `remove(attachment)`: apaga do Storage e da tabela.
+- `getUrl(path)`: gera URL assinada sob demanda para download.
 
-Novo componente `src/components/initiatives/InitiativeTimeline.tsx`:
-- Lista vertical estilo timeline (linha à esquerda, bolinha com avatar, card com autor, data relativa em pt-BR e conteúdo).
-- Campo de novo comentário no topo (Textarea + botão "Comentar"), desabilitado se vazio.
-- Estado vazio: "Nenhum comentário ainda."
+Novo componente `src/components/okr/KRAttachments.tsx`:
+- Lista de arquivos com ícone por tipo, nome, tamanho formatado e data.
+- Clique baixa/abre via URL assinada.
+- Botão "Anexar arquivo" (input file oculto) visível apenas quando `canEdit`.
+- Botão de excluir por item com confirmação, apenas quando `canEdit`.
+- Estado vazio: "Nenhum anexo."
+- Toast de erro para arquivo acima de 10MB ou falha de upload.
 
-Integração em `src/pages/initiatives/InitiativesList.tsx`:
-- Adicionar botão "Comentários" (ícone MessageSquare) em `InitiativeActions` OU na linha da tabela, abrindo um `Dialog` que renderiza `InitiativeTimeline` da iniciativa selecionada.
-- Segue o padrão dos outros dialogs (form de edição) já usados na página.
+Integração em `src/components/okr/KeyResultCard.tsx`:
+- Nova aba "Anexos" ao lado de "Timeline" e "Gráfico" dentro do `CollapsibleContent`, renderizando `KRAttachments` com `canEdit={canEdit}`.
+- Badge com a contagem de anexos ao lado do botão de histórico quando houver arquivos.
 
 ## Detalhes técnicos
 
-- Datas formatadas com `formatDistanceToNow` do `date-fns` com `locale: ptBR`.
-- Sem edição/exclusão na UI (imutáveis).
-- Regras de BU herdadas da iniciativa — não duplicar `business_unit_id` na tabela de comentários; a RLS resolve via subquery no `initiatives`.
-- Sem alterações em `useInitiatives` nem na lógica de status.
+- Qualquer tipo de arquivo, limite de 10MB validado no cliente e no bucket.
+- Bucket privado + `createSignedUrl` (60s) no clique, sem expor arquivos publicamente.
+- Nomes de arquivo sanitizados no path; `file_name` original preservado para exibição.
+- Tamanho formatado em KB/MB e datas em pt-BR com `date-fns`.
+- Sem alterações na lógica de progresso ou nas regras de check-in.
