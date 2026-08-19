@@ -22,7 +22,9 @@ const statusBg: Record<string, string> = {
 };
 
 export function ProgressBar({ value, status = "on_track", className, showLabel = false }: ProgressBarProps) {
-  const clamped = Math.min(100, Math.max(0, value));
+  const raw = Math.max(0, value);
+  const clamped = Math.min(100, raw);
+  const display = Math.round(raw);
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -46,11 +48,11 @@ export function ProgressBar({ value, status = "on_track", className, showLabel =
       {showLabel && (
         <span
           className={cn(
-            "text-xs tabular-nums w-10 text-right",
-            clamped >= 70 ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+            "text-xs tabular-nums w-11 text-right",
+            display >= 70 ? "font-bold text-foreground" : "font-medium text-muted-foreground"
           )}
         >
-          {clamped}%
+          {display}%
         </span>
       )}
     </div>
