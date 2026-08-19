@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
@@ -41,23 +42,32 @@ const krTypes = [
   { value: "boolean", label: "Sim/Não" },
 ];
 
+function buildDefaults(defaultValues?: Partial<KeyResult>): FormValues {
+  return {
+    title: defaultValues?.title || "",
+    description: defaultValues?.description || "",
+    kr_type: defaultValues?.kr_type || "percentage",
+    start_value: defaultValues?.start_value ?? 0,
+    target_value: defaultValues?.target_value ?? 100,
+    current_value: defaultValues?.current_value ?? 0,
+    unit: defaultValues?.unit || "",
+    weight: (defaultValues as any)?.weight ?? 1,
+    owner_id: defaultValues?.owner_id || "",
+  };
+}
+
 export function KeyResultForm({ open, onOpenChange, onSubmit, defaultValues, isPending, existingWeights = [] }: KeyResultFormProps) {
   const { toast } = useToast();
   const { data: profiles = [] } = useProfiles();
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      title: defaultValues?.title || "",
-      description: defaultValues?.description || "",
-      kr_type: defaultValues?.kr_type || "percentage",
-      start_value: defaultValues?.start_value ?? 0,
-      target_value: defaultValues?.target_value ?? 100,
-      current_value: defaultValues?.current_value ?? 0,
-      unit: defaultValues?.unit || "",
-      weight: (defaultValues as any)?.weight ?? 1,
-      owner_id: defaultValues?.owner_id || "",
-    },
+    defaultValues: buildDefaults(defaultValues),
   });
+
+  useEffect(() => {
+    if (open) reset(buildDefaults(defaultValues));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultValues?.id]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
