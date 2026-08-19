@@ -550,6 +550,47 @@ export type Database = {
           },
         ]
       }
+      kr_attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          key_result_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          key_result_id: string
+          storage_path: string
+          uploaded_by?: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          key_result_id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kr_attachments_key_result_id_fkey"
+            columns: ["key_result_id"]
+            isOneToOne: false
+            referencedRelation: "key_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kr_checkins: {
         Row: {
           author_id: string
@@ -1214,6 +1255,8 @@ export type Database = {
       }
     }
     Functions: {
+      can_edit_kr: { Args: { _kr_id: string }; Returns: boolean }
+      can_view_kr: { Args: { _kr_id: string }; Returns: boolean }
       decide_change_request: {
         Args: { _comment?: string; _decision: string; _request_id: string }
         Returns: Json

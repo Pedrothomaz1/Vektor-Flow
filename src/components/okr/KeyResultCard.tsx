@@ -4,11 +4,13 @@ import { Pencil, History, Trash2 } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
 import { CheckinTimeline } from "./CheckinTimeline";
 import { CheckinChart } from "./CheckinChart";
+import { KRAttachments } from "./KRAttachments";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useCheckins } from "@/hooks/useCheckins";
+import { useKRAttachments } from "@/hooks/useKRAttachments";
 import type { KeyResult } from "@/hooks/useKeyResults";
 
 interface KeyResultCardProps {
@@ -30,6 +32,7 @@ export function KeyResultCard({ kr, onEdit, onDelete, canEdit = true, canCheckin
   const [open, setOpen] = useState(false);
   const progress = computeProgress(kr);
   const { checkins } = useCheckins(open ? kr.id : undefined);
+  const { attachments } = useKRAttachments(kr.id);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -117,6 +120,9 @@ export function KeyResultCard({ kr, onEdit, onDelete, canEdit = true, canCheckin
             <TabsList className="h-8 w-full">
               <TabsTrigger value="timeline" className="text-xs flex-1">Timeline</TabsTrigger>
               <TabsTrigger value="chart" className="text-xs flex-1">Gráfico</TabsTrigger>
+              <TabsTrigger value="attachments" className="text-xs flex-1">
+                Anexos{attachments.length > 0 ? ` (${attachments.length})` : ""}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="timeline">
               <CheckinTimeline keyResultId={kr.id} unit={kr.unit} targetValue={kr.target_value} canCheckin={canCheckin} />
@@ -128,6 +134,9 @@ export function KeyResultCard({ kr, onEdit, onDelete, canEdit = true, canCheckin
                 targetValue={kr.target_value}
                 unit={kr.unit}
               />
+            </TabsContent>
+            <TabsContent value="attachments">
+              <KRAttachments keyResultId={kr.id} canEdit={canEdit} />
             </TabsContent>
           </Tabs>
         </CollapsibleContent>
