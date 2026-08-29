@@ -44,6 +44,7 @@ export default function CyclesList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editCycle, setEditCycle] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [periodFormOpen, setPeriodFormOpen] = useState(false);
 
   // Anuais primeiro, com seus trimestres logo abaixo
   const ordered = cycles
