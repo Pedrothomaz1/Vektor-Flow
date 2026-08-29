@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfiles } from "@/hooks/useProfiles";
+import { useCycles } from "@/hooks/useCycles";
 import type { Objective } from "@/hooks/useObjectives";
 import { BUSelectField } from "@/components/common/BUFilter";
 
@@ -15,6 +16,7 @@ const schema = z.object({
   title: z.string().min(1, "Título obrigatório"),
   description: z.string().optional(),
   status: z.string().default("on_track"),
+  cycle_id: z.string().min(1, "Período obrigatório"),
   objective_type: z.string().default("quarterly"),
   owner_id: z.string().optional(),
   parent_objective_id: z.string().optional(),
@@ -30,6 +32,8 @@ interface ObjectiveFormProps {
   defaultValues?: Partial<Objective>;
   isPending?: boolean;
   objectives?: Objective[];
+  /** Ciclo/período padrão quando criando um novo objetivo */
+  cycleId?: string;
 }
 
 const statuses = [
@@ -39,26 +43,48 @@ const statuses = [
   { value: "completed", label: "Concluído" },
 ];
 
-const objectiveTypes = [
-  { value: "annual", label: "Anual" },
-  { value: "quarterly", label: "Trimestral" },
-  { value: "monthly", label: "Mensal" },
-];
-
-export function ObjectiveForm({ open, onOpenChange, onSubmit, defaultValues, isPending, objectives = [] }: ObjectiveFormProps) {
+export function ObjectiveForm({ open, onOpenChange, onSubmit, defaultValues, isPending, objectives = [], cycleId }: ObjectiveFormProps) {
   const { data: profiles = [] } = useProfiles();
+  const { cycles } = useCycles();
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title || "",
       description: defaultValues?.description || "",
       status: defaultValues?.status || "on_track",
+      cycle_id: defaultValues?.cycle_id || cycleId || "",
       objective_type: defaultValues?.objective_type || "quarterly",
       owner_id: defaultValues?.owner_id || "",
       parent_objective_id: defaultValues?.parent_objective_id || "",
       business_unit_id: defaultValues?.business_unit_id ?? null,
     },
   });
+
+  // Períodos disponíveis: ciclos anuais com seus trimestres logo abaixo
+  const periodOptions = (() => {
+    const roots = cycles.filter((c) => !c.parent_cycle_id);
+    const out: { id: string; label: string; child: boolean }[] = [];
+    for (const root of roots) {
+      out.push({ id: root.id, label: root.name, child: false });
+      cycles
+        .filter((c) => c.parent_cycle_id === root.id)
+        .sort((a, b) => a.start_date.localeCompare(b.start_date))
+        .forEach((q) => out.push({ id: q.id, label: q.name, child: true }));
+    }
+    // ciclos órfãos (pai não visível)
+    for (const c of cycles) {
+      if (c.parent_cycle_id && !roots.some((r) => r.id === c.parent_cycle_id) && !out.some((o) => o.id === c.id)) {
+        out.push({ id: c.id, label: c.name, child: false });
+      }
+    }
+    return out;
+  })();
+
+  const handlePeriodChange = (id: string) => {
+    setValue("cycle_id", id);
+    const cycle = cycles.find((c) => c.id === id);
+    if (cycle) setValue("objective_type", cycle.period_type || (cycle.parent_cycle_id ? "quarterly" : "annual"));
+  };
 
   const availableParents = objectives.filter((o) => o.id !== defaultValues?.id);
 
