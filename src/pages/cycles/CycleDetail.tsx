@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, Lock, CalendarRange } from "lucide-react";
+import { ArrowLeft, Calendar, Lock, CalendarRange, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCycles, useCycleQuarters } from "@/hooks/useCycles";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ObjectivesList } from "@/pages/objectives/ObjectivesList";
 import { OKROrgChart } from "@/components/okr/OKROrgChart";
+import { CycleForm } from "@/pages/cycles/CycleForm";
 import { CycleApprovalCard } from "@/components/cycles/CycleApprovalCard";
 import { ExportReportDialog } from "@/components/reports/ExportReportDialog";
 
@@ -42,6 +43,7 @@ export default function CycleDetail() {
   const availableIds = [root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[];
   const [periods, setPeriods] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
+  const [quarterFormOpen, setQuarterFormOpen] = useState(false);
 
   // Por padrão seleciona todos os períodos disponíveis
   useEffect(() => {
@@ -113,11 +115,16 @@ export default function CycleDetail() {
       <Card className="card-elevated">
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
           <CardTitle className="text-base">Árvore de OKRs</CardTitle>
-          {quarters.length === 0 && (
-            <Button variant="outline" size="sm" onClick={handleCreateQuarters} disabled={createQuarters.isPending}>
-              <CalendarRange className="mr-2 h-4 w-4" /> Gerar trimestres
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setQuarterFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Novo trimestre
             </Button>
-          )}
+            {quarters.length === 0 && (
+              <Button variant="ghost" size="sm" onClick={handleCreateQuarters} disabled={createQuarters.isPending}>
+                <CalendarRange className="mr-2 h-4 w-4" /> Gerar Q1–Q4
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {treeLoading ? (
@@ -137,6 +144,14 @@ export default function CycleDetail() {
           )}
         </CardContent>
       </Card>
+
+      <CycleForm
+        open={quarterFormOpen}
+        onOpenChange={setQuarterFormOpen}
+        cycleId={null}
+        defaultPeriodType="quarterly"
+        defaultParentCycleId={root?.id ?? null}
+      />
 
       <Card className="card-elevated">
         <CardHeader><CardTitle className="text-base">OKRs Vinculados</CardTitle></CardHeader>
