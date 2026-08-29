@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useOKRTree } from "@/hooks/useOKRTree";
-import { useCycles } from "@/hooks/useCycles";
+import { useCycles, useCycleQuarters } from "@/hooks/useCycles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { OKRTreeView } from "@/components/okr/OKRTreeView";
 import { DataStoryBarChart } from "@/components/charts/DataStoryBarChart";
@@ -47,7 +47,13 @@ export default function AlignmentView() {
   const activeCycle = cycles.find((c) => c.status === "active") || cycles[0];
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
   const cycleId = selectedCycleId || activeCycle?.id || "";
-  const { data: tree, isLoading } = useOKRTree(cycleId || undefined);
+  const { root, quarters } = useCycleQuarters(cycleId || undefined);
+  const [period, setPeriod] = useState<string>("all");
+  const treeCycleIds =
+    period === "all"
+      ? ([root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[])
+      : [period];
+  const { data: tree, isLoading } = useOKRTree(cycleId ? treeCycleIds : undefined);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [ownerFilter, setOwnerFilter] = useState<string>("");
   const [expanded, setExpanded] = useState(true);
@@ -96,11 +102,26 @@ export default function AlignmentView() {
             <SelectValue placeholder="Selecione um ciclo" />
           </SelectTrigger>
           <SelectContent>
-            {cycles.map((c) => (
+            {cycles.filter((c) => !c.parent_cycle_id).map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        {quarters.length > 0 && (
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Ano completo</SelectItem>
+              {root && <SelectItem value={root.id}>Somente anual</SelectItem>}
+              {quarters.map((q) => (
+                <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
           <SelectTrigger className="w-44">
