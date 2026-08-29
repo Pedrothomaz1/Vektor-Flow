@@ -28,6 +28,8 @@ const cycleSchema = z.object({
   status: z.string().default("draft"),
   lock_after_start: z.boolean().default(false),
   business_unit_id: z.string().nullable().optional(),
+  period_type: z.string().default("annual"),
+  parent_cycle_id: z.string().nullable().optional(),
 }).refine((d) => d.end_date > d.start_date, {
   message: "Data de fim deve ser posterior à de início",
   path: ["end_date"],
@@ -49,7 +51,7 @@ export function CycleForm({ open, onOpenChange, cycleId }: CycleFormProps) {
 
   const form = useForm<CycleFormValues>({
     resolver: zodResolver(cycleSchema),
-    defaultValues: { name: "", description: "", start_date: "", end_date: "", status: "draft", lock_after_start: false, business_unit_id: null },
+    defaultValues: { name: "", description: "", start_date: "", end_date: "", status: "draft", lock_after_start: false, business_unit_id: null, period_type: "annual", parent_cycle_id: null },
   });
 
   useEffect(() => {
@@ -63,22 +65,25 @@ export function CycleForm({ open, onOpenChange, cycleId }: CycleFormProps) {
         status: editing.status,
         lock_after_start: !!(meta?.lock_after_start),
         business_unit_id: editing.business_unit_id ?? null,
+        period_type: editing.period_type ?? "annual",
+        parent_cycle_id: editing.parent_cycle_id ?? null,
       });
     } else {
-      form.reset({ name: "", description: "", start_date: "", end_date: "", status: "draft", lock_after_start: false, business_unit_id: null });
+      form.reset({ name: "", description: "", start_date: "", end_date: "", status: "draft", lock_after_start: false, business_unit_id: null, period_type: "annual", parent_cycle_id: null });
     }
   }, [editing, open]);
 
   const onSubmit = async (values: CycleFormValues) => {
     try {
-      const { lock_after_start, business_unit_id, ...rest } = values;
+      const { lock_after_start, business_unit_id, period_type, parent_cycle_id, ...rest } = values;
+      const parentId = period_type === "quarterly" ? parent_cycle_id || null : null;
       const metadata = { lock_after_start };
 
       if (editing) {
-        await updateCycle.mutateAsync({ id: editing.id, ...rest, metadata, business_unit_id });
+        await updateCycle.mutateAsync({ id: editing.id, ...rest, metadata, business_unit_id, period_type, parent_cycle_id: parentId });
         toast({ title: "Ciclo atualizado" });
       } else {
-        await createCycle.mutateAsync({ name: rest.name, start_date: rest.start_date, end_date: rest.end_date, description: rest.description, status: rest.status, metadata, business_unit_id });
+        await createCycle.mutateAsync({ name: rest.name, start_date: rest.start_date, end_date: rest.end_date, description: rest.description, status: rest.status, metadata, business_unit_id, period_type, parent_cycle_id: parentId });
         toast({ title: "Ciclo criado" });
       }
       onOpenChange(false);
@@ -159,6 +164,35 @@ export function CycleForm({ open, onOpenChange, cycleId }: CycleFormProps) {
                 </Label>
               </FormItem>
             )} />
+            <FormField control={form.control} name="period_type" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de período</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isLocked}>
+                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    <SelectItem value="annual">Anual</SelectItem>
+                    <SelectItem value="quarterly">Trimestral</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            {form.watch("period_type") === "quarterly" && (
+              <FormField control={form.control} name="parent_cycle_id" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ciclo anual</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isLocked}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione o ciclo anual" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {cycles.filter((c) => (c.period_type ?? "annual") === "annual" && c.id !== editing?.id).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
             <FormField control={form.control} name="business_unit_id" render={({ field }) => (
               <FormItem>
                 <FormLabel>Business Unit</FormLabel>
