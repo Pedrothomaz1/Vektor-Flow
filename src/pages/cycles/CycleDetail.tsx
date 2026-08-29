@@ -113,18 +113,8 @@ export default function CycleDetail() {
 
       {/* Org chart tree view */}
       <Card className="card-elevated">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+        <CardHeader>
           <CardTitle className="text-base">Árvore de OKRs</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setQuarterFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Novo trimestre
-            </Button>
-            {quarters.length === 0 && (
-              <Button variant="ghost" size="sm" onClick={handleCreateQuarters} disabled={createQuarters.isPending}>
-                <CalendarRange className="mr-2 h-4 w-4" /> Gerar Q1–Q4
-              </Button>
-            )}
-          </div>
         </CardHeader>
         <CardContent>
           {treeLoading ? (
