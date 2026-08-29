@@ -67,7 +67,7 @@ export function useObjectives(cycleId: string | undefined) {
   });
 
   const updateObjective = useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; title?: string; description?: string; status?: string; objective_type?: string; owner_id?: string; parent_objective_id?: string | null; business_unit_id?: string | null }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; title?: string; description?: string; status?: string; cycle_id?: string; objective_type?: string; owner_id?: string; parent_objective_id?: string | null; business_unit_id?: string | null }) => {
       const { data, error } = await supabase
         .from("objectives")
         .update(updates)

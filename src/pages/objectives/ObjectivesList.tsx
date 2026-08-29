@@ -31,9 +31,9 @@ export function ObjectivesList({ cycleId }: ObjectivesListProps) {
   const [formOpen, setFormOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleCreate = (values: { title: string; description?: string; status?: string; objective_type?: string; owner_id?: string; parent_objective_id?: string }) => {
+  const handleCreate = (values: { title: string; description?: string; status?: string; cycle_id?: string; objective_type?: string; owner_id?: string; parent_objective_id?: string }) => {
     createObjective.mutate(
-      { ...values, cycle_id: cycleId },
+      { ...values, cycle_id: values.cycle_id || cycleId },
       {
         onSuccess: () => {
           setFormOpen(false);
@@ -93,6 +93,7 @@ export function ObjectivesList({ cycleId }: ObjectivesListProps) {
         onSubmit={handleCreate}
         isPending={createObjective.isPending}
         objectives={objectives}
+        cycleId={cycleId}
       />
     </div>
   );
