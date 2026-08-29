@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Calendar, Lock, CalendarRange } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCycles, useCycleQuarters } from "@/hooks/useCycles";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PeriodFilter } from "@/components/cycles/PeriodFilter";
 import { useToast } from "@/hooks/use-toast";
 import { useOKRTree } from "@/hooks/useOKRTree";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,15 +39,18 @@ export default function CycleDetail() {
   const { toast } = useToast();
   const cycle = cycles.find((c) => c.id === id);
   const { root, quarters } = useCycleQuarters(id);
-  const [period, setPeriod] = useState<string>("all");
+  const availableIds = [root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[];
+  const [periods, setPeriods] = useState<string[]>([]);
+  const [touched, setTouched] = useState(false);
 
-  // "all" = ciclo anual + todos os trimestres; caso contrário, apenas o período escolhido
-  const treeCycleIds =
-    period === "all"
-      ? [root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[]
-      : [period];
+  // Por padrão seleciona todos os períodos disponíveis
+  useEffect(() => {
+    if (!touched && availableIds.length > 0 && periods.length === 0) {
+      setPeriods(availableIds);
+    }
+  }, [availableIds.join(","), touched]);
 
-  const { data: tree, isLoading: treeLoading } = useOKRTree(treeCycleIds);
+  const { data: tree, isLoading: treeLoading } = useOKRTree(periods);
 
   const handleCreateQuarters = async () => {
     if (!root) return;
@@ -123,18 +126,12 @@ export default function CycleDetail() {
             <OKROrgChart
               tree={tree || []}
               extraFilters={
-                <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="h-8 text-xs w-[180px]">
-                    <SelectValue placeholder="Período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Ano completo</SelectItem>
-                    {root && <SelectItem value={root.id}>Somente anual</SelectItem>}
-                    {quarters.map((q) => (
-                      <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PeriodFilter
+                  root={root}
+                  quarters={quarters}
+                  value={periods}
+                  onValueChange={(ids) => { setTouched(true); setPeriods(ids); }}
+                />
               }
             />
           )}
