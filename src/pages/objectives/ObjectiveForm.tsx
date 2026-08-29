@@ -127,13 +127,18 @@ export function ObjectiveForm({ open, onOpenChange, onSubmit, defaultValues, isP
               </Select>
             </div>
             <div>
-              <Label>Tipo</Label>
-              <Select value={watch("objective_type")} onValueChange={(v) => setValue("objective_type", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Label>Período</Label>
+              <Select value={watch("cycle_id") || ""} onValueChange={handlePeriodChange}>
+                <SelectTrigger><SelectValue placeholder="Selecione o período" /></SelectTrigger>
                 <SelectContent position="popper" className="z-[9999]">
-                  {objectiveTypes.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  {periodOptions.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.child ? `— ${p.label}` : p.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {errors.cycle_id && <p className="text-xs text-destructive mt-1">{errors.cycle_id.message}</p>}
             </div>
           </div>
           <div>
