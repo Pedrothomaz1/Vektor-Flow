@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, Lock, CalendarRange, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCycles, useCycleQuarters } from "@/hooks/useCycles";
@@ -36,14 +36,12 @@ const statusBadge = (status: string) => {
 
 export default function CycleDetail() {
   const { id } = useParams<{ id: string }>();
-  const { cycles, isLoading, createQuarters } = useCycles();
-  const { toast } = useToast();
+  const { cycles, isLoading } = useCycles();
   const cycle = cycles.find((c) => c.id === id);
   const { root, quarters } = useCycleQuarters(id);
   const availableIds = [root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[];
   const [periods, setPeriods] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
-  const [quarterFormOpen, setQuarterFormOpen] = useState(false);
 
   // Por padrão seleciona todos os períodos disponíveis
   useEffect(() => {
@@ -134,14 +132,6 @@ export default function CycleDetail() {
           )}
         </CardContent>
       </Card>
-
-      <CycleForm
-        open={quarterFormOpen}
-        onOpenChange={setQuarterFormOpen}
-        cycleId={null}
-        defaultPeriodType="quarterly"
-        defaultParentCycleId={root?.id ?? null}
-      />
 
       <Card className="card-elevated">
         <CardHeader><CardTitle className="text-base">OKRs Vinculados</CardTitle></CardHeader>
