@@ -134,6 +134,18 @@ export default function CyclesList() {
                     {canManage && (
                       <TableCell>
                         <div className="flex gap-1">
+                          {!cycle.parent_cycle_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Gerar trimestres"
+                              disabled={createQuarters.isPending}
+                              onClick={() => handleQuarters(cycle.id)}
+                            >
+                              <CalendarRange className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditCycle(cycle.id); setFormOpen(true); }}>
                             <Pencil className="h-4 w-4" />
                           </Button>
