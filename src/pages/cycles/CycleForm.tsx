@@ -41,9 +41,13 @@ interface CycleFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   cycleId: string | null;
+  /** Pré-seleciona o tipo de período ao criar (ex.: trimestre de um ciclo anual) */
+  defaultPeriodType?: string;
+  /** Pré-seleciona o ciclo anual pai ao criar um trimestre */
+  defaultParentCycleId?: string | null;
 }
 
-export function CycleForm({ open, onOpenChange, cycleId }: CycleFormProps) {
+export function CycleForm({ open, onOpenChange, cycleId, defaultPeriodType = "annual", defaultParentCycleId = null }: CycleFormProps) {
   const { cycles, createCycle, updateCycle } = useCycles();
   const { toast } = useToast();
   const editing = cycleId ? cycles.find((c) => c.id === cycleId) : null;
@@ -69,7 +73,7 @@ export function CycleForm({ open, onOpenChange, cycleId }: CycleFormProps) {
         parent_cycle_id: editing.parent_cycle_id ?? null,
       });
     } else {
-      form.reset({ name: "", description: "", start_date: "", end_date: "", status: "draft", lock_after_start: false, business_unit_id: null, period_type: "annual", parent_cycle_id: null });
+      form.reset({ name: "", description: "", start_date: "", end_date: "", status: "draft", lock_after_start: false, business_unit_id: null, period_type: defaultPeriodType, parent_cycle_id: defaultParentCycleId });
     }
   }, [editing, open]);
 

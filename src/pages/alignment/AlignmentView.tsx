@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useOKRTree } from "@/hooks/useOKRTree";
 import { useCycles, useCycleQuarters } from "@/hooks/useCycles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { OKRTreeView } from "@/components/okr/OKRTreeView";
+import { PeriodFilter } from "@/components/cycles/PeriodFilter";
 import { DataStoryBarChart } from "@/components/charts/DataStoryBarChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -49,12 +50,15 @@ export default function AlignmentView() {
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
   const cycleId = selectedCycleId || activeCycle?.id || "";
   const { root, quarters } = useCycleQuarters(cycleId || undefined);
-  const [period, setPeriod] = useState<string>("all");
-  const treeCycleIds =
-    period === "all"
-      ? ([root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[])
-      : [period];
-  const { data: tree, isLoading } = useOKRTree(cycleId ? treeCycleIds : undefined);
+  const availableIds = [root?.id, ...quarters.map((q) => q.id)].filter(Boolean) as string[];
+  const [periods, setPeriods] = useState<string[]>([]);
+
+  // Ao trocar de ciclo, seleciona todos os períodos disponíveis
+  useEffect(() => {
+    setPeriods(availableIds);
+  }, [availableIds.join(",")]);
+
+  const { data: tree, isLoading } = useOKRTree(periods);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [ownerFilter, setOwnerFilter] = useState<string>("");
   const [expanded, setExpanded] = useState(true);
@@ -110,18 +114,13 @@ export default function AlignmentView() {
         </Select>
 
         {quarters.length > 0 && (
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Ano completo</SelectItem>
-              {root && <SelectItem value={root.id}>Somente anual</SelectItem>}
-              {quarters.map((q) => (
-                <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <PeriodFilter
+            root={root}
+            quarters={quarters}
+            value={periods}
+            onValueChange={setPeriods}
+            className="h-10 w-[240px] justify-start"
+          />
         )}
 
         <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
