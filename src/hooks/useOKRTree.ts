@@ -74,7 +74,7 @@ export function useOKRTree(cycleId: string | string[] | undefined) {
 
       return buildTree(objectives, keyResults);
     },
-    enabled: !!cycleId,
+    enabled: ids.length > 0,
   });
 }
 
