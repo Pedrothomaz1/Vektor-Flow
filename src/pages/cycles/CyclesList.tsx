@@ -84,9 +84,14 @@ export default function CyclesList() {
           <p className="text-sm text-muted-foreground">Gerencie os ciclos de OKR da organização</p>
         </div>
         {canManage && (
-          <Button variant="cta" onClick={() => { setEditCycle(null); setFormOpen(true); }}>
-            <Plus className="h-4 w-4" /> Novo Ciclo
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setPeriodFormOpen(true)}>
+              <Plus className="h-4 w-4" /> Novo Período
+            </Button>
+            <Button variant="cta" onClick={() => { setEditCycle(null); setFormOpen(true); }}>
+              <Plus className="h-4 w-4" /> Novo Ciclo
+            </Button>
+          </div>
         )}
       </div>
 
@@ -168,6 +173,13 @@ export default function CyclesList() {
         open={formOpen}
         onOpenChange={setFormOpen}
         cycleId={editCycle}
+      />
+
+      <CycleForm
+        open={periodFormOpen}
+        onOpenChange={setPeriodFormOpen}
+        cycleId={null}
+        defaultPeriodType="quarterly"
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
