@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, CalendarRange, CornerDownRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCycles } from "@/hooks/useCycles";
@@ -36,7 +36,7 @@ const statusLabel: Record<string, string> = {
 };
 
 export default function CyclesList() {
-  const { cycles, isLoading, deleteCycle } = useCycles();
+  const { cycles, isLoading, deleteCycle, createQuarters } = useCycles();
   const { can } = usePermissions();
   const canManage = can("cycles.create") || can("cycles.edit");
   const { toast } = useToast();
@@ -44,6 +44,25 @@ export default function CyclesList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editCycle, setEditCycle] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Anuais primeiro, com seus trimestres logo abaixo
+  const ordered = cycles
+    .filter((c) => !c.parent_cycle_id)
+    .flatMap((parent) => [
+      parent,
+      ...cycles
+        .filter((c) => c.parent_cycle_id === parent.id)
+        .sort((a, b) => a.start_date.localeCompare(b.start_date)),
+    ]);
+
+  const handleQuarters = async (parentId: string) => {
+    try {
+      const created = await createQuarters.mutateAsync(parentId);
+      toast({ title: created ? `${created} trimestre(s) criado(s)` : "Trimestres já existentes" });
+    } catch (e: any) {
+      toast({ title: "Erro ao gerar trimestres", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -88,12 +107,18 @@ export default function CyclesList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cycles.map((cycle) => (
+                {ordered.map((cycle) => (
                   <TableRow key={cycle.id}>
                     <TableCell>
-                      <Link to={`/cycles/${cycle.id}`} className="font-medium text-primary hover:underline">
-                        {cycle.name}
-                      </Link>
+                      <div className="flex items-center gap-1.5" style={{ paddingLeft: cycle.parent_cycle_id ? 20 : 0 }}>
+                        {cycle.parent_cycle_id && <CornerDownRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <Link to={`/cycles/${cycle.id}`} className="font-medium text-primary hover:underline">
+                          {cycle.name}
+                        </Link>
+                        <span className="text-2xs text-muted-foreground">
+                          {(cycle.period_type ?? "annual") === "quarterly" ? "Trimestral" : "Anual"}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <span className={statusBadge(cycle.status)}>
@@ -109,6 +134,18 @@ export default function CyclesList() {
                     {canManage && (
                       <TableCell>
                         <div className="flex gap-1">
+                          {!cycle.parent_cycle_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Gerar trimestres"
+                              disabled={createQuarters.isPending}
+                              onClick={() => handleQuarters(cycle.id)}
+                            >
+                              <CalendarRange className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditCycle(cycle.id); setFormOpen(true); }}>
                             <Pencil className="h-4 w-4" />
                           </Button>

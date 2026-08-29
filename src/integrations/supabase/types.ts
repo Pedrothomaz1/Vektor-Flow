@@ -276,6 +276,8 @@ export type Database = {
           locked: boolean
           metadata: Json | null
           name: string
+          parent_cycle_id: string | null
+          period_type: string
           start_date: string
           status: string
           updated_at: string
@@ -290,6 +292,8 @@ export type Database = {
           locked?: boolean
           metadata?: Json | null
           name: string
+          parent_cycle_id?: string | null
+          period_type?: string
           start_date: string
           status?: string
           updated_at?: string
@@ -304,6 +308,8 @@ export type Database = {
           locked?: boolean
           metadata?: Json | null
           name?: string
+          parent_cycle_id?: string | null
+          period_type?: string
           start_date?: string
           status?: string
           updated_at?: string
@@ -328,6 +334,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cycles_parent_cycle_id_fkey"
+            columns: ["parent_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "cycles"
             referencedColumns: ["id"]
           },
         ]

@@ -37,21 +37,22 @@ export function buildTree(objectives: Objective[], keyResults?: KeyResult[]): Tr
   return roots;
 }
 
-export function useOKRTree(cycleId: string | undefined) {
+export function useOKRTree(cycleId: string | string[] | undefined) {
+  const ids = (Array.isArray(cycleId) ? cycleId : cycleId ? [cycleId] : []).filter(Boolean);
   return useQuery({
-    queryKey: ["okr-tree", cycleId],
+    queryKey: ["okr-tree", ids.join(",")],
     queryFn: async () => {
-      if (!cycleId) return [];
+      if (ids.length === 0) return [];
       const [objRes, krRes] = await Promise.all([
         supabase
           .from("objectives")
           .select("*, profiles!objectives_owner_id_fkey(full_name, avatar_url), key_results(id)")
-          .eq("cycle_id", cycleId)
+          .in("cycle_id", ids)
           .order("created_at", { ascending: true }),
         supabase
           .from("key_results")
           .select("*, objectives!inner(cycle_id)")
-          .eq("objectives.cycle_id", cycleId)
+          .in("objectives.cycle_id", ids)
           .order("created_at", { ascending: true }),
       ]);
       if (objRes.error) throw objRes.error;
@@ -73,7 +74,7 @@ export function useOKRTree(cycleId: string | undefined) {
 
       return buildTree(objectives, keyResults);
     },
-    enabled: !!cycleId,
+    enabled: ids.length > 0,
   });
 }
 
