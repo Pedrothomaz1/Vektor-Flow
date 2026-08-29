@@ -284,31 +284,59 @@ function collectMatchingIds(nodes: TreeNode[], query: string): string[] {
 
 interface OKROrgChartProps {
   tree: TreeNode[];
+  /** Slot de filtros extras (ex.: seletor de período) exibido na barra superior */
+  extraFilters?: ReactNode;
 }
 
-export function OKROrgChart({ tree }: OKROrgChartProps) {
+/**
+ * Filtro estrito: mantém apenas nós que atendem ao predicado.
+ * Filhos que passam no filtro são promovidos ao lugar do pai removido.
+ */
+function pruneTree(nodes: TreeNode[], keep: (n: TreeNode) => boolean): TreeNode[] {
+  const result: TreeNode[] = [];
+  for (const n of nodes) {
+    const children = pruneTree(n.children, keep);
+    if (keep(n)) {
+      result.push({ ...n, children });
+    } else {
+      result.push(...children);
+    }
+  }
+  return result;
+}
+
+export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [buFilter, setBuFilter] = useState<string>("all");
+  const [ownerFilter, setOwnerFilter] = useState<string>("all");
   const { businessUnits } = useBusinessUnits();
   const showBUFilter = businessUnits.length > 1;
 
-  // Filter tree by business_unit_id, keeping ancestors of matching nodes
+  // Lista de responsáveis presentes na árvore
+  const owners = useMemo(() => {
+    const map = new Map<string, string>();
+    const walk = (nodes: TreeNode[]) => {
+      for (const n of nodes) {
+        map.set(n.objective.owner_id, n.objective.owner_name || "Sem dono");
+        walk(n.children);
+      }
+    };
+    walk(tree);
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [tree]);
+
+  // O filtro determina exatamente o que aparece
   const filteredTree = useMemo(() => {
-    if (buFilter === "all") return tree;
-    const matches = (buId: string | null | undefined) =>
-      buFilter === "none" ? !buId : buId === buFilter;
-    const filter = (nodes: TreeNode[]): TreeNode[] =>
-      nodes
-        .map((n) => {
-          const children = filter(n.children);
-          if (matches(n.objective.business_unit_id) || children.length > 0) {
-            return { ...n, children };
-          }
-          return null;
-        })
-        .filter(Boolean) as TreeNode[];
-    return filter(tree);
-  }, [tree, buFilter]);
+    if (buFilter === "all" && ownerFilter === "all") return tree;
+    const keep = (n: TreeNode) => {
+      const buId = n.objective.business_unit_id;
+      const buOk =
+        buFilter === "all" ? true : buFilter === "none" ? !buId : buId === buFilter;
+      const ownerOk = ownerFilter === "all" ? true : n.objective.owner_id === ownerFilter;
+      return buOk && ownerOk;
+    };
+    return pruneTree(tree, keep);
+  }, [tree, buFilter, ownerFilter]);
 
   const allIds = useMemo(() => collectIds(filteredTree), [filteredTree]);
   // Start collapsed — only root nodes visible
@@ -340,14 +368,8 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
     setExpandedIds(allExpanded ? new Set() : new Set(allIds));
   }, [allExpanded, allIds]);
 
-  if (tree.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <Target className="h-8 w-8 mx-auto mb-2" />
-        <p className="text-sm">Nenhum objetivo encontrado neste ciclo.</p>
-      </div>
-    );
-  }
+  const buName = (id: string | null | undefined) =>
+    businessUnits.find((b) => b.id === id)?.name ?? "Corporativo";
 
   return (
     <div className="space-y-3">
@@ -361,28 +383,55 @@ export function OKROrgChart({ tree }: OKROrgChartProps) {
             className="pl-8 h-8 text-xs"
           />
         </div>
+        {extraFilters}
         {showBUFilter && (
           <BUFilter value={buFilter} onValueChange={setBuFilter} className="h-8 text-xs w-[200px]" />
         )}
+        <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+          <SelectTrigger className="h-8 text-xs w-[200px]">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os responsáveis</SelectItem>
+            {owners.map(([id, name]) => (
+              <SelectItem key={id} value={id}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExpandAll}>
           {allExpanded ? "Colapsar tudo" : "Expandir tudo"}
         </Button>
       </div>
 
-      <div className="overflow-auto pb-4 max-h-[calc(100vh-260px)] touch-pan-x touch-pan-y">
-        <div className="flex gap-4 md:gap-6 justify-center py-2 px-2 flex-wrap">
-          {filteredTree.map((node) => (
-            <OrgNode
-              key={node.objective.id}
-              node={node}
-              depth={0}
-              searchQuery={searchQuery}
-              expandedIds={expandedIds}
-              onToggle={handleToggle}
-            />
-          ))}
+      {filteredTree.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <Target className="h-8 w-8 mx-auto mb-2" />
+          <p className="text-sm">Nenhum objetivo encontrado para os filtros selecionados.</p>
         </div>
-      </div>
+      ) : (
+        <div className="overflow-auto pb-4 max-h-[calc(100vh-260px)] touch-pan-x touch-pan-y">
+          {/* Cada raiz é uma coluna independente — ramos nunca se misturam */}
+          <div className="flex gap-6 items-start py-2 px-2 w-max min-w-full">
+            {filteredTree.map((node) => (
+              <div
+                key={node.objective.id}
+                className="flex flex-col items-center shrink-0 rounded-xl border border-border/60 bg-muted/20 px-4 pt-3 pb-5"
+              >
+                <span className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {buName(node.objective.business_unit_id)}
+                </span>
+                <OrgNode
+                  node={node}
+                  depth={0}
+                  searchQuery={searchQuery}
+                  expandedIds={expandedIds}
+                  onToggle={handleToggle}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
