@@ -5,13 +5,13 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCycles, useCycleQuarters } from "@/hooks/useCycles";
 import { PeriodFilter } from "@/components/cycles/PeriodFilter";
-import { useToast } from "@/hooks/use-toast";
+
 import { useOKRTree } from "@/hooks/useOKRTree";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ObjectivesList } from "@/pages/objectives/ObjectivesList";
 import { OKROrgChart } from "@/components/okr/OKROrgChart";
-import { CycleForm } from "@/pages/cycles/CycleForm";
+
 import { CycleApprovalCard } from "@/components/cycles/CycleApprovalCard";
 import { ExportReportDialog } from "@/components/reports/ExportReportDialog";
 
@@ -51,16 +51,6 @@ export default function CycleDetail() {
   }, [availableIds.join(","), touched]);
 
   const { data: tree, isLoading: treeLoading } = useOKRTree(periods);
-
-  const handleCreateQuarters = async () => {
-    if (!root) return;
-    try {
-      const created = await createQuarters.mutateAsync(root.id);
-      toast({ title: created ? `${created} trimestre(s) criado(s)` : "Trimestres já existentes" });
-    } catch (e: any) {
-      toast({ title: "Erro ao gerar trimestres", description: e.message, variant: "destructive" });
-    }
-  };
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
