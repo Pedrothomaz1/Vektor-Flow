@@ -44,7 +44,8 @@ const statusLabels: Record<string, string> = {
 export default function AlignmentView() {
   const { cycles } = useCycles();
   const { data: profiles } = useProfiles();
-  const activeCycle = cycles.find((c) => c.status === "active") || cycles[0];
+  const rootCycles = cycles.filter((c) => !c.parent_cycle_id);
+  const activeCycle = rootCycles.find((c) => c.status === "active") || rootCycles[0];
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
   const cycleId = selectedCycleId || activeCycle?.id || "";
   const { root, quarters } = useCycleQuarters(cycleId || undefined);
