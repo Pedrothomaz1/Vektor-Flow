@@ -207,11 +207,11 @@ function OrgNode({
         )}
       </div>
 
-      {/* KRs as compact stacked chips */}
+      {/* KRs as compact chips stacked vertically */}
       {isExpanded && hasKRs && (
         <>
           <VLine height="h-4" />
-          <div className="flex flex-wrap gap-2 justify-center">
+          <div className="flex flex-col gap-2 items-center">
             {node.keyResults.map((kr) => (
               <KRCard key={kr.id} kr={kr} />
             ))}
