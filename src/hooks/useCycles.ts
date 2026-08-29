@@ -62,7 +62,7 @@ export function useCycles() {
   const { user } = useAuth();
 
   const cyclesQuery = useQuery({
-    queryKey: ["cycles"],
+    queryKey: ["cycles", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cycles")
@@ -71,6 +71,7 @@ export function useCycles() {
       if (error) throw error;
       return data as Cycle[];
     },
+    enabled: Boolean(user?.id),
   });
 
   const createCycle = useMutation({
@@ -85,7 +86,7 @@ export function useCycles() {
       if (error) throw error;
       return data as Cycle;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles", user?.id] }),
   });
 
   const updateCycle = useMutation({
@@ -100,7 +101,7 @@ export function useCycles() {
       if (error) throw error;
       return data as Cycle;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles", user?.id] }),
   });
 
   const deleteCycle = useMutation({
@@ -108,7 +109,7 @@ export function useCycles() {
       const { error } = await supabase.from("cycles").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles", user?.id] }),
   });
 
   /** Cria os trimestres faltantes de um ciclo anual */
@@ -140,7 +141,7 @@ export function useCycles() {
       if (error) throw error;
       return rows.length;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cycles", user?.id] }),
   });
 
   return {
