@@ -46,15 +46,18 @@ export default function CyclesList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [periodFormOpen, setPeriodFormOpen] = useState(false);
 
-  // Anuais primeiro, com seus trimestres logo abaixo
+  // Anuais primeiro, com seus trimestres logo abaixo.
+  // Ciclos cujo pai não é visível (outra BU) também entram como raiz.
+  const visibleIds = new Set(cycles.map((c) => c.id));
   const ordered = cycles
-    .filter((c) => !c.parent_cycle_id)
+    .filter((c) => !c.parent_cycle_id || !visibleIds.has(c.parent_cycle_id))
     .flatMap((parent) => [
       parent,
       ...cycles
         .filter((c) => c.parent_cycle_id === parent.id)
         .sort((a, b) => a.start_date.localeCompare(b.start_date)),
     ]);
+
 
   const handleQuarters = async (parentId: string) => {
     try {
