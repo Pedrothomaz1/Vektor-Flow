@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useKeyResults } from "@/hooks/useKeyResults";
 import { useCycles } from "@/hooks/useCycles";
 import { useObjectiveAncestors } from "@/hooks/useOKRTree";
+import { SiblingObjectiveNav } from "@/components/okr/SiblingObjectiveNav";
+
 import { useOKRCollaborators } from "@/hooks/useOKRCollaborators";
 import { useOKRLinks } from "@/hooks/useOKRLinks";
 import { useChangeRequests } from "@/hooks/useChangeRequests";
@@ -188,6 +190,13 @@ export default function ObjectiveDetail() {
           <span className="text-foreground font-medium">{obj.title}</span>
         </nav>
       )}
+
+      <SiblingObjectiveNav
+        parentObjectiveId={obj.parent_objective_id}
+        parentTitle={ancestorList[ancestorList.length - 1]?.title}
+        currentObjectiveId={obj.id}
+      />
+
 
       <div className="flex items-center gap-4">
         <Link to={`/cycles/${obj.cycle_id}`}>
