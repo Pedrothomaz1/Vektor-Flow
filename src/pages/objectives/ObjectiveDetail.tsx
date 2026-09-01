@@ -10,6 +10,7 @@ import { useKeyResults } from "@/hooks/useKeyResults";
 import { useCycles } from "@/hooks/useCycles";
 import { useObjectiveAncestors } from "@/hooks/useOKRTree";
 import { SiblingObjectiveNav } from "@/components/okr/SiblingObjectiveNav";
+import { ChildObjectivesList } from "@/components/okr/ChildObjectivesList";
 
 import { useOKRCollaborators } from "@/hooks/useOKRCollaborators";
 import { useOKRLinks } from "@/hooks/useOKRLinks";
@@ -331,7 +332,10 @@ export default function ObjectiveDetail() {
         </div>
       )}
 
+      <ChildObjectivesList objectiveId={obj.id} />
+
       {/* Weight Distributor */}
+
       {canEditObj && keyResults.length >= 2 && (
         <WeightDistributor
           keyResults={keyResults}

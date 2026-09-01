@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, type RefObject, type ReactNode } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { Target, Key, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { Target, Key, ChevronDown, ChevronRight, Search, Network, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,7 @@ function ObjectiveCard({
         "block rounded-lg border-l-4 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/60",
         typeBorderColor[obj.objective_type] || "border-l-primary",
         typeAccentBg[obj.objective_type] || "",
-        isRoot ? "w-[240px] p-3" : "w-[200px] p-2.5",
+        isRoot ? "w-[196px] p-2.5" : "w-[164px] p-2",
         highlighted ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
       ].join(" ")}
     >
@@ -132,7 +132,7 @@ function KRCard({ kr }: { kr: any }) {
   return (
     <Link
       to={`/objectives/${kr.objective_id}#kr-${kr.id}`}
-      className="block rounded-lg border-l-4 border-l-muted-foreground/40 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/60 w-[200px] p-2.5"
+      className="block rounded-lg border-l-4 border-l-muted-foreground/40 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/60 w-[164px] p-2"
     >
       <div className="flex items-start gap-1.5 mb-1">
         <div className="shrink-0 rounded bg-muted-foreground/10 flex items-center justify-center h-5 w-5">
@@ -263,6 +263,97 @@ function OrgNode({
   );
 }
 
+/* ─── Vertical (lista hierárquica indentada) ─── */
+function VerticalNode({
+  node,
+  depth = 0,
+  searchQuery,
+  expandedIds,
+  onToggle,
+}: {
+  node: TreeNode;
+  depth?: number;
+  searchQuery: string;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const hasChildren = node.children.length > 0;
+  const hasKRs = node.keyResults.length > 0;
+  const isExpanded = expandedIds.has(node.objective.id);
+  const isHighlighted = directMatch(node, searchQuery);
+  const obj = node.objective;
+
+  return (
+    <div className="min-w-0">
+      <div
+        className={[
+          "flex items-center gap-2 rounded-lg border-l-4 bg-card px-2 py-1.5 shadow-sm",
+          typeBorderColor[obj.objective_type] || "border-l-primary",
+          typeAccentBg[obj.objective_type] || "",
+          isHighlighted ? "ring-2 ring-primary" : "",
+        ].join(" ")}
+      >
+        <button
+          type="button"
+          onClick={() => onToggle(obj.id)}
+          disabled={!hasChildren && !hasKRs}
+          className="shrink-0 text-muted-foreground disabled:opacity-30 hover:text-foreground"
+          aria-label={isExpanded ? "Recolher" : "Expandir"}
+        >
+          {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+        <Target className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <Link to={`/objectives/${obj.id}`} className="flex-1 min-w-0 truncate text-xs font-semibold hover:underline">
+          {obj.title}
+        </Link>
+        <span className="hidden sm:block shrink-0 text-[10px] text-muted-foreground truncate max-w-[120px]">
+          {obj.owner_name}
+        </span>
+        <div className="w-24 sm:w-32 shrink-0">
+          <ProgressBar value={obj.progress} status={obj.status} showLabel />
+        </div>
+      </div>
+
+      {isExpanded && (hasKRs || hasChildren) && (
+        <div className="ml-3 sm:ml-5 mt-1.5 space-y-1.5 border-l border-border pl-2 sm:pl-3">
+          {hasKRs &&
+            node.keyResults.map((kr) => {
+              const progress = kr.target_value > 0 ? Math.round((kr.current_value / kr.target_value) * 100) : 0;
+              return (
+                <Link
+                  key={kr.id}
+                  to={`/objectives/${kr.objective_id}#kr-${kr.id}`}
+                  className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2 py-1 hover:bg-accent/40"
+                >
+                  <Key className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 min-w-0 truncate text-[11px]">{kr.title}</span>
+                  <span className="hidden sm:inline shrink-0 font-mono text-[10px] text-muted-foreground">
+                    {kr.current_value}/{kr.target_value}
+                  </span>
+                  <div className="w-20 sm:w-28 shrink-0">
+                    <ProgressBar value={progress} status={kr.status} showLabel />
+                  </div>
+                </Link>
+              );
+            })}
+          {node.children.map((child) => (
+            <VerticalNode
+              key={child.objective.id}
+              node={child}
+              depth={depth + 1}
+              searchQuery={searchQuery}
+              expandedIds={expandedIds}
+              onToggle={onToggle}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 function collectIds(nodes: TreeNode[]): string[] {
   const ids: string[] = [];
   for (const n of nodes) {
@@ -372,6 +463,45 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
   const buName = (id: string | null | undefined) =>
     businessUnits.find((b) => b.id === id)?.name ?? "Corporativo";
 
+  const [layout, setLayout] = useState<"horizontal" | "vertical">(
+    () => (localStorage.getItem("okr-tree-layout") as "horizontal" | "vertical") || "horizontal"
+  );
+  useEffect(() => {
+    localStorage.setItem("okr-tree-layout", layout);
+  }, [layout]);
+
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+  const syncingRef = useRef(false);
+
+  useEffect(() => {
+    const update = () => setScrollWidth(contentRef.current?.scrollWidth ?? 0);
+    update();
+    const id = window.setTimeout(update, 100);
+    window.addEventListener("resize", update);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("resize", update);
+    };
+  }, [filteredTree, expandedIds, layout]);
+
+  const syncScroll = useCallback(
+    (from: RefObject<HTMLDivElement>, to: RefObject<HTMLDivElement>) => {
+      if (syncingRef.current) {
+        syncingRef.current = false;
+        return;
+      }
+      if (from.current && to.current) {
+        syncingRef.current = true;
+        to.current.scrollLeft = from.current.scrollLeft;
+      }
+    },
+    []
+  );
+
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -402,6 +532,22 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExpandAll}>
           {allExpanded ? "Colapsar tudo" : "Expandir tudo"}
         </Button>
+        <div className="flex items-center rounded-md border border-border p-0.5">
+          <button
+            type="button"
+            onClick={() => setLayout("horizontal")}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "horizontal" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Network className="h-3.5 w-3.5" /> Horizontal
+          </button>
+          <button
+            type="button"
+            onClick={() => setLayout("vertical")}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "vertical" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <List className="h-3.5 w-3.5" /> Vertical
+          </button>
+        </div>
       </div>
 
       {filteredTree.length === 0 ? (
@@ -409,29 +555,62 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
           <Target className="h-8 w-8 mx-auto mb-2" />
           <p className="text-sm">Nenhum objetivo encontrado para os filtros selecionados.</p>
         </div>
+      ) : layout === "vertical" ? (
+        <div className="overflow-y-auto max-h-[calc(100vh-260px)] space-y-4 pb-4">
+          {filteredTree.map((node) => (
+            <div key={node.objective.id} className="rounded-xl border border-border/60 bg-muted/20 p-3">
+              <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {buName(node.objective.business_unit_id)}
+              </span>
+              <VerticalNode
+                node={node}
+                depth={0}
+                searchQuery={searchQuery}
+                expandedIds={expandedIds}
+                onToggle={handleToggle}
+              />
+            </div>
+          ))}
+        </div>
       ) : (
-        <div className="overflow-auto pb-4 max-h-[calc(100vh-260px)] touch-pan-x touch-pan-y">
-          {/* Cada raiz é uma coluna independente — ramos nunca se misturam */}
-          <div className="flex gap-6 items-start py-2 px-2 w-max min-w-full">
-            {filteredTree.map((node) => (
-              <div
-                key={node.objective.id}
-                className="flex flex-col items-center shrink-0 rounded-xl border border-border/60 bg-muted/20 px-4 pt-3 pb-5"
-              >
-                <span className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {buName(node.objective.business_unit_id)}
-                </span>
-                <OrgNode
-                  node={node}
-                  depth={0}
-                  searchQuery={searchQuery}
-                  expandedIds={expandedIds}
-                  onToggle={handleToggle}
-                />
-              </div>
-            ))}
+        <div className="space-y-1">
+          {/* Barra de rolagem espelhada no topo */}
+          <div
+            ref={topScrollRef}
+            onScroll={() => syncScroll(topScrollRef, bodyScrollRef)}
+            className="overflow-x-auto overflow-y-hidden"
+          >
+            <div style={{ width: scrollWidth, height: 1 }} />
+          </div>
+
+          <div
+            ref={bodyScrollRef}
+            onScroll={() => syncScroll(bodyScrollRef, topScrollRef)}
+            className="overflow-auto pb-4 max-h-[calc(100vh-280px)] touch-pan-x touch-pan-y"
+          >
+            {/* Cada raiz é uma coluna independente — ramos nunca se misturam */}
+            <div ref={contentRef} className="flex gap-6 items-start py-2 px-2 w-max min-w-full">
+              {filteredTree.map((node) => (
+                <div
+                  key={node.objective.id}
+                  className="flex flex-col items-center shrink-0 rounded-xl border border-border/60 bg-muted/20 px-4 pt-3 pb-5"
+                >
+                  <span className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {buName(node.objective.business_unit_id)}
+                  </span>
+                  <OrgNode
+                    node={node}
+                    depth={0}
+                    searchQuery={searchQuery}
+                    expandedIds={expandedIds}
+                    onToggle={handleToggle}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
       )}
     </div>
   );
