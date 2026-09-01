@@ -11,6 +11,8 @@ import { useCycles } from "@/hooks/useCycles";
 import { useObjectiveAncestors } from "@/hooks/useOKRTree";
 import { SiblingObjectiveNav } from "@/components/okr/SiblingObjectiveNav";
 import { ChildObjectivesList } from "@/components/okr/ChildObjectivesList";
+import { ObjectiveContextTree } from "@/components/okr/ObjectiveContextTree";
+
 
 import { useOKRCollaborators } from "@/hooks/useOKRCollaborators";
 import { useOKRLinks } from "@/hooks/useOKRLinks";
