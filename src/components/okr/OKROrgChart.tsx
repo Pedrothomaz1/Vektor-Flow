@@ -511,7 +511,7 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
     businessUnits.find((b) => b.id === id)?.name ?? "Corporativo";
 
   const [layout, setLayout] = useState<"horizontal" | "vertical">(
-    () => (localStorage.getItem("okr-tree-layout") as "horizontal" | "vertical") || "horizontal"
+    () => (localStorage.getItem("okr-tree-layout") as "horizontal" | "vertical") || "vertical"
   );
   useEffect(() => {
     localStorage.setItem("okr-tree-layout", layout);
