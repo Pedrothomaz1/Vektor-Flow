@@ -132,7 +132,7 @@ function KRCard({ kr }: { kr: any }) {
   return (
     <Link
       to={`/objectives/${kr.objective_id}#kr-${kr.id}`}
-      className="block rounded-lg border-l-4 border-l-muted-foreground/40 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/60 w-[200px] p-2.5"
+      className="block rounded-lg border-l-4 border-l-muted-foreground/40 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/60 w-[164px] p-2"
     >
       <div className="flex items-start gap-1.5 mb-1">
         <div className="shrink-0 rounded bg-muted-foreground/10 flex items-center justify-center h-5 w-5">
