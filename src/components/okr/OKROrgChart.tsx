@@ -288,7 +288,7 @@ function VerticalNode({
     <div className="min-w-0">
       <div
         className={[
-          "flex items-center gap-2 rounded-lg border border-border/50 border-l-4 bg-card px-2 py-2 shadow-sm transition-colors hover:bg-accent/30",
+          "flex items-start gap-2 rounded-lg border border-border/50 border-l-4 bg-card px-2 py-2 shadow-sm transition-colors hover:bg-accent/30",
           typeBorderColor[obj.objective_type] || "border-l-primary",
           typeAccentBg[obj.objective_type] || "",
           isHighlighted ? "ring-2 ring-primary" : "",
@@ -298,19 +298,20 @@ function VerticalNode({
           type="button"
           onClick={() => onToggle(obj.id)}
           disabled={!hasChildren && !hasKRs}
-          className="shrink-0 rounded p-0.5 text-muted-foreground disabled:opacity-25 hover:bg-accent hover:text-foreground"
+          className="mt-0.5 shrink-0 rounded p-0.5 text-muted-foreground disabled:opacity-25 hover:bg-accent hover:text-foreground"
           aria-label={isExpanded ? "Recolher" : "Expandir"}
         >
           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-        <Target className={`h-3.5 w-3.5 shrink-0 ${isRoot ? "text-primary" : "text-primary/70"}`} />
+        <Target className={`mt-1 h-3.5 w-3.5 shrink-0 ${isRoot ? "text-primary" : "text-primary/70"}`} />
         <Link
           to={`/objectives/${obj.id}`}
-          className={`flex-1 min-w-0 truncate hover:underline ${isRoot ? "text-sm font-bold" : "text-xs font-semibold"}`}
+          className={`flex-1 min-w-0 line-clamp-2 leading-snug hover:underline ${isRoot ? "text-sm font-bold" : "text-xs font-semibold"}`}
           title={obj.title}
         >
           {obj.title}
         </Link>
+
 
         {(hasChildren || hasKRs) && (
           <span className="hidden md:inline shrink-0 text-[10px] text-muted-foreground">
