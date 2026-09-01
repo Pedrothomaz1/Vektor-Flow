@@ -463,6 +463,45 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
   const buName = (id: string | null | undefined) =>
     businessUnits.find((b) => b.id === id)?.name ?? "Corporativo";
 
+  const [layout, setLayout] = useState<"horizontal" | "vertical">(
+    () => (localStorage.getItem("okr-tree-layout") as "horizontal" | "vertical") || "horizontal"
+  );
+  useEffect(() => {
+    localStorage.setItem("okr-tree-layout", layout);
+  }, [layout]);
+
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+  const syncingRef = useRef(false);
+
+  useEffect(() => {
+    const update = () => setScrollWidth(contentRef.current?.scrollWidth ?? 0);
+    update();
+    const id = window.setTimeout(update, 100);
+    window.addEventListener("resize", update);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("resize", update);
+    };
+  }, [filteredTree, expandedIds, layout]);
+
+  const syncScroll = useCallback(
+    (from: RefObject<HTMLDivElement>, to: RefObject<HTMLDivElement>) => {
+      if (syncingRef.current) {
+        syncingRef.current = false;
+        return;
+      }
+      if (from.current && to.current) {
+        syncingRef.current = true;
+        to.current.scrollLeft = from.current.scrollLeft;
+      }
+    },
+    []
+  );
+
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
