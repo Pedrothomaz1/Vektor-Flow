@@ -331,7 +331,10 @@ export default function ObjectiveDetail() {
         </div>
       )}
 
+      <ChildObjectivesList objectiveId={obj.id} />
+
       {/* Weight Distributor */}
+
       {canEditObj && keyResults.length >= 2 && (
         <WeightDistributor
           keyResults={keyResults}
