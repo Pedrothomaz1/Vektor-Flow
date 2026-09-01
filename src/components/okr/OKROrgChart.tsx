@@ -582,19 +582,20 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
         <div className="flex items-center rounded-md border border-border p-0.5">
           <button
             type="button"
-            onClick={() => setLayout("horizontal")}
-            className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "horizontal" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Network className="h-3.5 w-3.5" /> Horizontal
-          </button>
-          <button
-            type="button"
             onClick={() => setLayout("vertical")}
             className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "vertical" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
           >
-            <List className="h-3.5 w-3.5" /> Vertical
+            <List className="h-3.5 w-3.5" /> Lista
+          </button>
+          <button
+            type="button"
+            onClick={() => setLayout("horizontal")}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "horizontal" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Network className="h-3.5 w-3.5" /> Árvore
           </button>
         </div>
+
       </div>
 
       {filteredTree.length === 0 ? (
