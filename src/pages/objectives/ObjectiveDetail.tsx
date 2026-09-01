@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Target, Lock, Users, LinkIcon, ChevronRight, Unlock, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Target, Lock, Users, LinkIcon, Unlock, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +11,8 @@ import { useCycles } from "@/hooks/useCycles";
 import { useObjectiveAncestors } from "@/hooks/useOKRTree";
 import { SiblingObjectiveNav } from "@/components/okr/SiblingObjectiveNav";
 import { ChildObjectivesList } from "@/components/okr/ChildObjectivesList";
+import { ObjectiveContextTree } from "@/components/okr/ObjectiveContextTree";
+
 
 import { useOKRCollaborators } from "@/hooks/useOKRCollaborators";
 import { useOKRLinks } from "@/hooks/useOKRLinks";
@@ -176,21 +178,13 @@ export default function ObjectiveDetail() {
   const ancestorList = (ancestors || []).filter((a: any) => a.id !== id);
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb de alinhamento */}
-      {ancestorList.length > 0 && (
-        <nav className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
-          {ancestorList.map((a: any) => (
-            <span key={a.id} className="flex items-center gap-1">
-              <Link to={`/objectives/${a.id}`} className="hover:underline hover:text-foreground">
-                {a.title}
-              </Link>
-              <ChevronRight className="h-3 w-3" />
-            </span>
-          ))}
-          <span className="text-foreground font-medium">{obj.title}</span>
-        </nav>
-      )}
+    <div className="space-y-6 w-full min-w-0 max-w-full overflow-x-hidden">
+      <ObjectiveContextTree
+        ancestors={ancestorList as any}
+        current={{ id: obj.id, title: obj.title, progress: obj.progress }}
+        cycleName={obj.cycles?.name}
+        cycleId={obj.cycle_id}
+      />
 
       <SiblingObjectiveNav
         parentObjectiveId={obj.parent_objective_id}
@@ -199,22 +193,23 @@ export default function ObjectiveDetail() {
       />
 
 
-      <div className="flex items-center gap-4">
-        <Link to={`/cycles/${obj.cycle_id}`}>
+      <div className="flex flex-wrap items-start gap-3 min-w-0">
+        <Link to={`/cycles/${obj.cycle_id}`} className="shrink-0">
           <Button variant="ghost" size="sm"><ArrowLeft className="mr-2 h-4 w-4" />Voltar ao ciclo</Button>
         </Link>
-        <div className="flex-1">
-          <p className="text-xs text-muted-foreground">{obj.cycles?.name}</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{obj.title}</h1>
-          <div className="flex items-center gap-2 mt-1">
+        <div className="flex-1 min-w-0 basis-[240px]">
+          <p className="text-xs text-muted-foreground truncate">{obj.cycles?.name}</p>
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight break-words">{obj.title}</h1>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
             <span className={statusBadge[obj.status] || "badge-info"}>{statusLabel[obj.status] || obj.status}</span>
             <Avatar className="h-6 w-6">
               {obj.profiles?.avatar_url && <AvatarImage src={obj.profiles.avatar_url} alt={obj.profiles?.full_name} />}
               <AvatarFallback className="text-[10px]">{(obj.profiles?.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <span className="text-xs text-muted-foreground">{obj.profiles?.full_name}</span>
+            <span className="text-xs text-muted-foreground truncate max-w-[160px]">{obj.profiles?.full_name}</span>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
           {canEditObj && (
             <Button variant="outline" size="sm" onClick={() => setEditObjOpen(true)}>

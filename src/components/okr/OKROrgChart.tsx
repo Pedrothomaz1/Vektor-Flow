@@ -288,7 +288,7 @@ function VerticalNode({
     <div className="min-w-0">
       <div
         className={[
-          "flex items-center gap-2 rounded-lg border border-border/50 border-l-4 bg-card px-2 py-2 shadow-sm transition-colors hover:bg-accent/30",
+          "flex items-start gap-2 rounded-lg border border-border/50 border-l-4 bg-card px-2 py-2 shadow-sm transition-colors hover:bg-accent/30",
           typeBorderColor[obj.objective_type] || "border-l-primary",
           typeAccentBg[obj.objective_type] || "",
           isHighlighted ? "ring-2 ring-primary" : "",
@@ -298,22 +298,23 @@ function VerticalNode({
           type="button"
           onClick={() => onToggle(obj.id)}
           disabled={!hasChildren && !hasKRs}
-          className="shrink-0 rounded p-0.5 text-muted-foreground disabled:opacity-25 hover:bg-accent hover:text-foreground"
+          className="mt-0.5 shrink-0 rounded p-0.5 text-muted-foreground disabled:opacity-25 hover:bg-accent hover:text-foreground"
           aria-label={isExpanded ? "Recolher" : "Expandir"}
         >
           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-        <Target className={`h-3.5 w-3.5 shrink-0 ${isRoot ? "text-primary" : "text-primary/70"}`} />
+        <Target className={`mt-1 h-3.5 w-3.5 shrink-0 ${isRoot ? "text-primary" : "text-primary/70"}`} />
         <Link
           to={`/objectives/${obj.id}`}
-          className={`flex-1 min-w-0 truncate hover:underline ${isRoot ? "text-sm font-bold" : "text-xs font-semibold"}`}
+          className={`flex-1 min-w-0 line-clamp-2 leading-snug hover:underline ${isRoot ? "text-sm font-bold" : "text-xs font-semibold"}`}
           title={obj.title}
         >
           {obj.title}
         </Link>
 
+
         {(hasChildren || hasKRs) && (
-          <span className="hidden md:inline shrink-0 text-[10px] text-muted-foreground">
+          <span className="hidden md:inline mt-1 shrink-0 text-[10px] text-muted-foreground">
             {hasChildren ? `${node.children.length} obj` : ""}
             {hasChildren && hasKRs ? " · " : ""}
             {hasKRs ? `${node.keyResults.length} KR` : ""}
@@ -323,7 +324,7 @@ function VerticalNode({
         {obj.objective_type && (
           <Badge
             variant="outline"
-            className={`hidden lg:inline-flex shrink-0 text-[9px] px-1.5 py-0 h-4 ${obj.objective_type === "annual" ? "border-primary/60 text-primary font-bold" : "border-border"}`}
+            className={`hidden lg:inline-flex mt-0.5 shrink-0 text-[9px] px-1.5 py-0 h-4 ${obj.objective_type === "annual" ? "border-primary/60 text-primary font-bold" : "border-border"}`}
           >
             {typeLabel[obj.objective_type] || obj.objective_type}
           </Badge>
@@ -331,12 +332,12 @@ function VerticalNode({
 
         <Badge
           variant={statusVariant[obj.status] || "outline"}
-          className="hidden sm:inline-flex shrink-0 text-[9px] px-1.5 py-0 h-4"
+          className="hidden sm:inline-flex mt-0.5 shrink-0 text-[9px] px-1.5 py-0 h-4"
         >
           {statusLabel[obj.status] || obj.status}
         </Badge>
 
-        <div className="hidden lg:flex items-center gap-1 shrink-0 max-w-[140px]">
+        <div className="hidden lg:flex items-center gap-1 mt-0.5 shrink-0 max-w-[140px]">
           <Avatar className="h-4 w-4 shrink-0">
             {obj.owner_avatar && <AvatarImage src={obj.owner_avatar} alt={obj.owner_name} />}
             <AvatarFallback className="text-[7px]">
@@ -346,10 +347,11 @@ function VerticalNode({
           <span className="text-[10px] text-muted-foreground truncate">{obj.owner_name}</span>
         </div>
 
-        <div className="w-24 sm:w-32 lg:w-40 shrink-0">
+        <div className="w-24 sm:w-32 lg:w-40 mt-0.5 shrink-0">
           <ProgressBar value={obj.progress} status={obj.status} showLabel />
         </div>
       </div>
+
 
       {isExpanded && (hasKRs || hasChildren) && (
         <div className="ml-3 sm:ml-5 mt-1.5 space-y-1.5 border-l border-border pl-2 sm:pl-3">

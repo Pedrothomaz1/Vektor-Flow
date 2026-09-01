@@ -104,7 +104,8 @@ export default function CycleDetail() {
         <CardHeader>
           <CardTitle className="text-base">Árvore de OKRs</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0 overflow-x-hidden">
+
           {treeLoading ? (
             <p className="text-sm text-muted-foreground">Carregando árvore...</p>
           ) : (
