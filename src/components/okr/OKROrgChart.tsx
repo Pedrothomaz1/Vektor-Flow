@@ -263,6 +263,97 @@ function OrgNode({
   );
 }
 
+/* ─── Vertical (lista hierárquica indentada) ─── */
+function VerticalNode({
+  node,
+  depth = 0,
+  searchQuery,
+  expandedIds,
+  onToggle,
+}: {
+  node: TreeNode;
+  depth?: number;
+  searchQuery: string;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const hasChildren = node.children.length > 0;
+  const hasKRs = node.keyResults.length > 0;
+  const isExpanded = expandedIds.has(node.objective.id);
+  const isHighlighted = directMatch(node, searchQuery);
+  const obj = node.objective;
+
+  return (
+    <div className="min-w-0">
+      <div
+        className={[
+          "flex items-center gap-2 rounded-lg border-l-4 bg-card px-2 py-1.5 shadow-sm",
+          typeBorderColor[obj.objective_type] || "border-l-primary",
+          typeAccentBg[obj.objective_type] || "",
+          isHighlighted ? "ring-2 ring-primary" : "",
+        ].join(" ")}
+      >
+        <button
+          type="button"
+          onClick={() => onToggle(obj.id)}
+          disabled={!hasChildren && !hasKRs}
+          className="shrink-0 text-muted-foreground disabled:opacity-30 hover:text-foreground"
+          aria-label={isExpanded ? "Recolher" : "Expandir"}
+        >
+          {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+        <Target className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <Link to={`/objectives/${obj.id}`} className="flex-1 min-w-0 truncate text-xs font-semibold hover:underline">
+          {obj.title}
+        </Link>
+        <span className="hidden sm:block shrink-0 text-[10px] text-muted-foreground truncate max-w-[120px]">
+          {obj.owner_name}
+        </span>
+        <div className="w-24 sm:w-32 shrink-0">
+          <ProgressBar value={obj.progress} status={obj.status} showLabel />
+        </div>
+      </div>
+
+      {isExpanded && (hasKRs || hasChildren) && (
+        <div className="ml-3 sm:ml-5 mt-1.5 space-y-1.5 border-l border-border pl-2 sm:pl-3">
+          {hasKRs &&
+            node.keyResults.map((kr) => {
+              const progress = kr.target_value > 0 ? Math.round((kr.current_value / kr.target_value) * 100) : 0;
+              return (
+                <Link
+                  key={kr.id}
+                  to={`/objectives/${kr.objective_id}#kr-${kr.id}`}
+                  className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2 py-1 hover:bg-accent/40"
+                >
+                  <Key className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 min-w-0 truncate text-[11px]">{kr.title}</span>
+                  <span className="hidden sm:inline shrink-0 font-mono text-[10px] text-muted-foreground">
+                    {kr.current_value}/{kr.target_value}
+                  </span>
+                  <div className="w-20 sm:w-28 shrink-0">
+                    <ProgressBar value={progress} status={kr.status} showLabel />
+                  </div>
+                </Link>
+              );
+            })}
+          {node.children.map((child) => (
+            <VerticalNode
+              key={child.objective.id}
+              node={child}
+              depth={depth + 1}
+              searchQuery={searchQuery}
+              expandedIds={expandedIds}
+              onToggle={onToggle}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 function collectIds(nodes: TreeNode[]): string[] {
   const ids: string[] = [];
   for (const n of nodes) {
