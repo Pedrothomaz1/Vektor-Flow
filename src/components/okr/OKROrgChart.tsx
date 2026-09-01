@@ -314,7 +314,7 @@ function VerticalNode({
 
 
         {(hasChildren || hasKRs) && (
-          <span className="hidden md:inline shrink-0 text-[10px] text-muted-foreground">
+          <span className="hidden md:inline mt-1 shrink-0 text-[10px] text-muted-foreground">
             {hasChildren ? `${node.children.length} obj` : ""}
             {hasChildren && hasKRs ? " · " : ""}
             {hasKRs ? `${node.keyResults.length} KR` : ""}
@@ -324,7 +324,7 @@ function VerticalNode({
         {obj.objective_type && (
           <Badge
             variant="outline"
-            className={`hidden lg:inline-flex shrink-0 text-[9px] px-1.5 py-0 h-4 ${obj.objective_type === "annual" ? "border-primary/60 text-primary font-bold" : "border-border"}`}
+            className={`hidden lg:inline-flex mt-0.5 shrink-0 text-[9px] px-1.5 py-0 h-4 ${obj.objective_type === "annual" ? "border-primary/60 text-primary font-bold" : "border-border"}`}
           >
             {typeLabel[obj.objective_type] || obj.objective_type}
           </Badge>
@@ -332,12 +332,12 @@ function VerticalNode({
 
         <Badge
           variant={statusVariant[obj.status] || "outline"}
-          className="hidden sm:inline-flex shrink-0 text-[9px] px-1.5 py-0 h-4"
+          className="hidden sm:inline-flex mt-0.5 shrink-0 text-[9px] px-1.5 py-0 h-4"
         >
           {statusLabel[obj.status] || obj.status}
         </Badge>
 
-        <div className="hidden lg:flex items-center gap-1 shrink-0 max-w-[140px]">
+        <div className="hidden lg:flex items-center gap-1 mt-0.5 shrink-0 max-w-[140px]">
           <Avatar className="h-4 w-4 shrink-0">
             {obj.owner_avatar && <AvatarImage src={obj.owner_avatar} alt={obj.owner_name} />}
             <AvatarFallback className="text-[7px]">
@@ -347,10 +347,11 @@ function VerticalNode({
           <span className="text-[10px] text-muted-foreground truncate">{obj.owner_name}</span>
         </div>
 
-        <div className="w-24 sm:w-32 lg:w-40 shrink-0">
+        <div className="w-24 sm:w-32 lg:w-40 mt-0.5 shrink-0">
           <ProgressBar value={obj.progress} status={obj.status} showLabel />
         </div>
       </div>
+
 
       {isExpanded && (hasKRs || hasChildren) && (
         <div className="ml-3 sm:ml-5 mt-1.5 space-y-1.5 border-l border-border pl-2 sm:pl-3">
