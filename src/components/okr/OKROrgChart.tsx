@@ -493,6 +493,22 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExpandAll}>
           {allExpanded ? "Colapsar tudo" : "Expandir tudo"}
         </Button>
+        <div className="flex items-center rounded-md border border-border p-0.5">
+          <button
+            type="button"
+            onClick={() => setLayout("horizontal")}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "horizontal" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Network className="h-3.5 w-3.5" /> Horizontal
+          </button>
+          <button
+            type="button"
+            onClick={() => setLayout("vertical")}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] ${layout === "vertical" ? "bg-primary/10 text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <List className="h-3.5 w-3.5" /> Vertical
+          </button>
+        </div>
       </div>
 
       {filteredTree.length === 0 ? (
@@ -500,29 +516,62 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
           <Target className="h-8 w-8 mx-auto mb-2" />
           <p className="text-sm">Nenhum objetivo encontrado para os filtros selecionados.</p>
         </div>
+      ) : layout === "vertical" ? (
+        <div className="overflow-y-auto max-h-[calc(100vh-260px)] space-y-4 pb-4">
+          {filteredTree.map((node) => (
+            <div key={node.objective.id} className="rounded-xl border border-border/60 bg-muted/20 p-3">
+              <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {buName(node.objective.business_unit_id)}
+              </span>
+              <VerticalNode
+                node={node}
+                depth={0}
+                searchQuery={searchQuery}
+                expandedIds={expandedIds}
+                onToggle={handleToggle}
+              />
+            </div>
+          ))}
+        </div>
       ) : (
-        <div className="overflow-auto pb-4 max-h-[calc(100vh-260px)] touch-pan-x touch-pan-y">
-          {/* Cada raiz é uma coluna independente — ramos nunca se misturam */}
-          <div className="flex gap-6 items-start py-2 px-2 w-max min-w-full">
-            {filteredTree.map((node) => (
-              <div
-                key={node.objective.id}
-                className="flex flex-col items-center shrink-0 rounded-xl border border-border/60 bg-muted/20 px-4 pt-3 pb-5"
-              >
-                <span className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {buName(node.objective.business_unit_id)}
-                </span>
-                <OrgNode
-                  node={node}
-                  depth={0}
-                  searchQuery={searchQuery}
-                  expandedIds={expandedIds}
-                  onToggle={handleToggle}
-                />
-              </div>
-            ))}
+        <div className="space-y-1">
+          {/* Barra de rolagem espelhada no topo */}
+          <div
+            ref={topScrollRef}
+            onScroll={() => syncScroll(topScrollRef, bodyScrollRef)}
+            className="overflow-x-auto overflow-y-hidden"
+          >
+            <div style={{ width: scrollWidth, height: 1 }} />
+          </div>
+
+          <div
+            ref={bodyScrollRef}
+            onScroll={() => syncScroll(bodyScrollRef, topScrollRef)}
+            className="overflow-auto pb-4 max-h-[calc(100vh-280px)] touch-pan-x touch-pan-y"
+          >
+            {/* Cada raiz é uma coluna independente — ramos nunca se misturam */}
+            <div ref={contentRef} className="flex gap-6 items-start py-2 px-2 w-max min-w-full">
+              {filteredTree.map((node) => (
+                <div
+                  key={node.objective.id}
+                  className="flex flex-col items-center shrink-0 rounded-xl border border-border/60 bg-muted/20 px-4 pt-3 pb-5"
+                >
+                  <span className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {buName(node.objective.business_unit_id)}
+                  </span>
+                  <OrgNode
+                    node={node}
+                    depth={0}
+                    searchQuery={searchQuery}
+                    expandedIds={expandedIds}
+                    onToggle={handleToggle}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
       )}
     </div>
   );
