@@ -80,7 +80,7 @@ function ObjectiveCard({
         "block rounded-lg border-l-4 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/60",
         typeBorderColor[obj.objective_type] || "border-l-primary",
         typeAccentBg[obj.objective_type] || "",
-        isRoot ? "w-[240px] p-3" : "w-[200px] p-2.5",
+        isRoot ? "w-[196px] p-2.5" : "w-[164px] p-2",
         highlighted ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "",
       ].join(" ")}
     >
