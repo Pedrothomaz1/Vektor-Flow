@@ -351,6 +351,22 @@ function VerticalNode({
           </span>
         )}
 
+        {hasChildren && hasKRs && (
+          <button
+            type="button"
+            onClick={() => onToggleKR(obj.id)}
+            className={`mt-0.5 shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors ${
+              krOpen
+                ? "border-primary/40 bg-primary/10 text-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Key className="h-3 w-3" />
+            Key Results ({node.keyResults.length})
+          </button>
+        )}
+
+
         {obj.objective_type && (
           <Badge
             variant="outline"
