@@ -679,7 +679,10 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
                 searchQuery={searchQuery}
                 expandedIds={expandedIds}
                 onToggle={handleToggle}
+                krExpandedIds={krExpandedIds}
+                onToggleKR={handleToggleKR}
               />
+
             </div>
           ))}
         </div>
