@@ -195,7 +195,7 @@ function OrgNode({
         <ObjectiveCard node={node} depth={depth} highlighted={isHighlighted} />
         {(hasChildren || hasKRs) && (
           <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1">
-            {(hasChildren || !hasChildren) && (hasChildren ? true : hasKRs) && (
+            {(hasChildren || hasKRs) && (
               <button
                 onClick={(e) => {
                   e.preventDefault();
