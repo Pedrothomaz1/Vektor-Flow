@@ -169,12 +169,16 @@ function OrgNode({
   searchQuery,
   expandedIds,
   onToggle,
+  krExpandedIds,
+  onToggleKR,
 }: {
   node: TreeNode;
   depth?: number;
   searchQuery: string;
   expandedIds: Set<string>;
   onToggle: (id: string) => void;
+  krExpandedIds: Set<string>;
+  onToggleKR: (id: string) => void;
 }) {
   const hasChildren = node.children.length > 0;
   const hasKRs = node.keyResults.length > 0;
@@ -182,42 +186,44 @@ function OrgNode({
   const isHighlighted = directMatch(node, searchQuery);
   const childCount = node.children.length;
   const krCount = node.keyResults.length;
-  
+  // Nós com filhos separam KRs em um toggle próprio
+  const krOpen = hasChildren ? krExpandedIds.has(node.objective.id) : isExpanded;
 
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
         <ObjectiveCard node={node} depth={depth} highlighted={isHighlighted} />
         {(hasChildren || hasKRs) && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggle(node.objective.id);
-            }}
-            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-0.5 rounded-full border border-border bg-card px-1.5 py-0.5 text-[8px] text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
-          >
-            {isExpanded ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
-            <span>
-              {childCount > 0 ? `${childCount} obj` : ""}
-              {childCount > 0 && krCount > 0 ? " · " : ""}
-              {krCount > 0 ? `${krCount} KR` : ""}
-            </span>
-          </button>
+          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1">
+            {(hasChildren || !hasChildren) && (hasChildren ? true : hasKRs) && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggle(node.objective.id);
+                }}
+                className="flex items-center gap-0.5 rounded-full border border-border bg-card px-1.5 py-0.5 text-[8px] text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
+              >
+                {isExpanded ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+                <span>{hasChildren ? `${childCount} obj` : `${krCount} KR`}</span>
+              </button>
+            )}
+            {hasChildren && hasKRs && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleKR(node.objective.id);
+                }}
+                className="flex items-center gap-0.5 rounded-full border border-border bg-muted px-1.5 py-0.5 text-[8px] text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
+              >
+                <Key className="h-2.5 w-2.5" />
+                <span>{krCount} KR</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
-
-      {/* KRs as compact chips stacked vertically */}
-      {isExpanded && hasKRs && (
-        <>
-          <VLine height="h-4" />
-          <div className="flex flex-col gap-2 items-center">
-            {node.keyResults.map((kr) => (
-              <KRCard key={kr.id} kr={kr} />
-            ))}
-          </div>
-        </>
-      )}
 
       {/* Child objectives */}
       {isExpanded && hasChildren && (
@@ -230,6 +236,8 @@ function OrgNode({
               searchQuery={searchQuery}
               expandedIds={expandedIds}
               onToggle={onToggle}
+              krExpandedIds={krExpandedIds}
+              onToggleKR={onToggleKR}
             />
           ) : (
             <div className="relative">
@@ -251,6 +259,8 @@ function OrgNode({
                       searchQuery={searchQuery}
                       expandedIds={expandedIds}
                       onToggle={onToggle}
+                      krExpandedIds={krExpandedIds}
+                      onToggleKR={onToggleKR}
                     />
                   </div>
                 ))}
@@ -259,9 +269,22 @@ function OrgNode({
           )}
         </>
       )}
+
+      {/* KRs em bloco próprio, sempre após os filhos */}
+      {krOpen && hasKRs && (
+        <>
+          <VLine height="h-4" />
+          <div className="flex flex-col gap-2 items-center rounded-lg bg-muted/40 p-2">
+            {node.keyResults.map((kr) => (
+              <KRCard key={kr.id} kr={kr} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
 
 /* ─── Vertical (acordeão hierárquico, largura total) ─── */
 function VerticalNode({
