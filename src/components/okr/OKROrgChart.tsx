@@ -169,12 +169,16 @@ function OrgNode({
   searchQuery,
   expandedIds,
   onToggle,
+  krExpandedIds,
+  onToggleKR,
 }: {
   node: TreeNode;
   depth?: number;
   searchQuery: string;
   expandedIds: Set<string>;
   onToggle: (id: string) => void;
+  krExpandedIds: Set<string>;
+  onToggleKR: (id: string) => void;
 }) {
   const hasChildren = node.children.length > 0;
   const hasKRs = node.keyResults.length > 0;
@@ -182,42 +186,44 @@ function OrgNode({
   const isHighlighted = directMatch(node, searchQuery);
   const childCount = node.children.length;
   const krCount = node.keyResults.length;
-  
+  // Nós com filhos separam KRs em um toggle próprio
+  const krOpen = hasChildren ? krExpandedIds.has(node.objective.id) : isExpanded;
 
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
         <ObjectiveCard node={node} depth={depth} highlighted={isHighlighted} />
         {(hasChildren || hasKRs) && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggle(node.objective.id);
-            }}
-            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-0.5 rounded-full border border-border bg-card px-1.5 py-0.5 text-[8px] text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
-          >
-            {isExpanded ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
-            <span>
-              {childCount > 0 ? `${childCount} obj` : ""}
-              {childCount > 0 && krCount > 0 ? " · " : ""}
-              {krCount > 0 ? `${krCount} KR` : ""}
-            </span>
-          </button>
+          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1">
+            {(hasChildren || hasKRs) && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggle(node.objective.id);
+                }}
+                className="flex items-center gap-0.5 rounded-full border border-border bg-card px-1.5 py-0.5 text-[8px] text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
+              >
+                {isExpanded ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+                <span>{hasChildren ? `${childCount} obj` : `${krCount} KR`}</span>
+              </button>
+            )}
+            {hasChildren && hasKRs && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleKR(node.objective.id);
+                }}
+                className="flex items-center gap-0.5 rounded-full border border-border bg-muted px-1.5 py-0.5 text-[8px] text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm"
+              >
+                <Key className="h-2.5 w-2.5" />
+                <span>{krCount} KR</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
-
-      {/* KRs as compact chips stacked vertically */}
-      {isExpanded && hasKRs && (
-        <>
-          <VLine height="h-4" />
-          <div className="flex flex-col gap-2 items-center">
-            {node.keyResults.map((kr) => (
-              <KRCard key={kr.id} kr={kr} />
-            ))}
-          </div>
-        </>
-      )}
 
       {/* Child objectives */}
       {isExpanded && hasChildren && (
@@ -230,6 +236,8 @@ function OrgNode({
               searchQuery={searchQuery}
               expandedIds={expandedIds}
               onToggle={onToggle}
+              krExpandedIds={krExpandedIds}
+              onToggleKR={onToggleKR}
             />
           ) : (
             <div className="relative">
@@ -251,6 +259,8 @@ function OrgNode({
                       searchQuery={searchQuery}
                       expandedIds={expandedIds}
                       onToggle={onToggle}
+                      krExpandedIds={krExpandedIds}
+                      onToggleKR={onToggleKR}
                     />
                   </div>
                 ))}
@@ -259,9 +269,22 @@ function OrgNode({
           )}
         </>
       )}
+
+      {/* KRs em bloco próprio, sempre após os filhos */}
+      {krOpen && hasKRs && (
+        <>
+          <VLine height="h-4" />
+          <div className="flex flex-col gap-2 items-center rounded-lg bg-muted/40 p-2">
+            {node.keyResults.map((kr) => (
+              <KRCard key={kr.id} kr={kr} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
 
 /* ─── Vertical (acordeão hierárquico, largura total) ─── */
 function VerticalNode({
@@ -270,12 +293,16 @@ function VerticalNode({
   searchQuery,
   expandedIds,
   onToggle,
+  krExpandedIds,
+  onToggleKR,
 }: {
   node: TreeNode;
   depth?: number;
   searchQuery: string;
   expandedIds: Set<string>;
   onToggle: (id: string) => void;
+  krExpandedIds: Set<string>;
+  onToggleKR: (id: string) => void;
 }) {
   const hasChildren = node.children.length > 0;
   const hasKRs = node.keyResults.length > 0;
@@ -283,6 +310,9 @@ function VerticalNode({
   const isHighlighted = directMatch(node, searchQuery);
   const obj = node.objective;
   const isRoot = depth === 0;
+  // Objetivos com filhos abrem só os filhos; KRs ficam em um toggle separado
+  const krOpen = hasChildren ? krExpandedIds.has(obj.id) : isExpanded;
+
 
   return (
     <div className="min-w-0">
@@ -321,6 +351,22 @@ function VerticalNode({
           </span>
         )}
 
+        {hasChildren && hasKRs && (
+          <button
+            type="button"
+            onClick={() => onToggleKR(obj.id)}
+            className={`mt-0.5 shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors ${
+              krOpen
+                ? "border-primary/40 bg-primary/10 text-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Key className="h-3 w-3" />
+            Key Results ({node.keyResults.length})
+          </button>
+        )}
+
+
         {obj.objective_type && (
           <Badge
             variant="outline"
@@ -353,9 +399,9 @@ function VerticalNode({
       </div>
 
 
-      {isExpanded && (hasKRs || hasChildren) && (
+      {(isExpanded || krOpen) && (hasKRs || hasChildren) && (
         <div className="ml-3 sm:ml-5 mt-1.5 space-y-1.5 border-l border-border pl-2 sm:pl-3">
-          {node.children.map((child) => (
+          {isExpanded && node.children.map((child) => (
             <VerticalNode
               key={child.objective.id}
               node={child}
@@ -363,16 +409,19 @@ function VerticalNode({
               searchQuery={searchQuery}
               expandedIds={expandedIds}
               onToggle={onToggle}
+              krExpandedIds={krExpandedIds}
+              onToggleKR={onToggleKR}
             />
           ))}
 
-          {hasKRs && (
-            <div className="space-y-1.5 pt-0.5">
+          {hasKRs && krOpen && (
+            <div className={`space-y-1.5 ${hasChildren ? "rounded-lg border border-border/60 bg-muted/30 p-2 mt-1.5" : "pt-0.5"}`}>
               {hasChildren && (
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Key Results
                 </span>
               )}
+
               {node.keyResults.map((kr) => {
                 const progress = kr.target_value > 0 ? Math.round((kr.current_value / kr.target_value) * 100) : 0;
                 return (
@@ -483,6 +532,7 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
   // Start collapsed — only root nodes visible
   const rootIds = useMemo(() => filteredTree.map((n) => n.objective.id), [filteredTree]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(rootIds));
+  const [krExpandedIds, setKrExpandedIds] = useState<Set<string>>(() => new Set());
   const allExpanded = expandedIds.size >= allIds.length;
 
   const handleSearchChange = useCallback(
@@ -505,9 +555,20 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
     });
   }, []);
 
+  const handleToggleKR = useCallback((id: string) => {
+    setKrExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const handleExpandAll = useCallback(() => {
     setExpandedIds(allExpanded ? new Set() : new Set(allIds));
+    setKrExpandedIds(allExpanded ? new Set() : new Set(allIds));
   }, [allExpanded, allIds]);
+
 
   const buName = (id: string | null | undefined) =>
     businessUnits.find((b) => b.id === id)?.name ?? "Corporativo";
@@ -618,7 +679,10 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
                 searchQuery={searchQuery}
                 expandedIds={expandedIds}
                 onToggle={handleToggle}
+                krExpandedIds={krExpandedIds}
+                onToggleKR={handleToggleKR}
               />
+
             </div>
           ))}
         </div>
@@ -654,7 +718,10 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
                     searchQuery={searchQuery}
                     expandedIds={expandedIds}
                     onToggle={handleToggle}
+                    krExpandedIds={krExpandedIds}
+                    onToggleKR={handleToggleKR}
                   />
+
                 </div>
               ))}
             </div>
