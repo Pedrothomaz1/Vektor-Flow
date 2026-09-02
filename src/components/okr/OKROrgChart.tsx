@@ -293,12 +293,16 @@ function VerticalNode({
   searchQuery,
   expandedIds,
   onToggle,
+  krExpandedIds,
+  onToggleKR,
 }: {
   node: TreeNode;
   depth?: number;
   searchQuery: string;
   expandedIds: Set<string>;
   onToggle: (id: string) => void;
+  krExpandedIds: Set<string>;
+  onToggleKR: (id: string) => void;
 }) {
   const hasChildren = node.children.length > 0;
   const hasKRs = node.keyResults.length > 0;
@@ -306,6 +310,9 @@ function VerticalNode({
   const isHighlighted = directMatch(node, searchQuery);
   const obj = node.objective;
   const isRoot = depth === 0;
+  // Objetivos com filhos abrem só os filhos; KRs ficam em um toggle separado
+  const krOpen = hasChildren ? krExpandedIds.has(obj.id) : isExpanded;
+
 
   return (
     <div className="min-w-0">
