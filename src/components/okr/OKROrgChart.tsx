@@ -532,6 +532,7 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
   // Start collapsed — only root nodes visible
   const rootIds = useMemo(() => filteredTree.map((n) => n.objective.id), [filteredTree]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(rootIds));
+  const [krExpandedIds, setKrExpandedIds] = useState<Set<string>>(() => new Set());
   const allExpanded = expandedIds.size >= allIds.length;
 
   const handleSearchChange = useCallback(
@@ -554,9 +555,20 @@ export function OKROrgChart({ tree, extraFilters }: OKROrgChartProps) {
     });
   }, []);
 
+  const handleToggleKR = useCallback((id: string) => {
+    setKrExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const handleExpandAll = useCallback(() => {
     setExpandedIds(allExpanded ? new Set() : new Set(allIds));
+    setKrExpandedIds(allExpanded ? new Set() : new Set(allIds));
   }, [allExpanded, allIds]);
+
 
   const buName = (id: string | null | undefined) =>
     businessUnits.find((b) => b.id === id)?.name ?? "Corporativo";
