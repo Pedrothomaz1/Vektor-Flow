@@ -399,9 +399,9 @@ function VerticalNode({
       </div>
 
 
-      {isExpanded && (hasKRs || hasChildren) && (
+      {(isExpanded || krOpen) && (hasKRs || hasChildren) && (
         <div className="ml-3 sm:ml-5 mt-1.5 space-y-1.5 border-l border-border pl-2 sm:pl-3">
-          {node.children.map((child) => (
+          {isExpanded && node.children.map((child) => (
             <VerticalNode
               key={child.objective.id}
               node={child}
@@ -409,16 +409,19 @@ function VerticalNode({
               searchQuery={searchQuery}
               expandedIds={expandedIds}
               onToggle={onToggle}
+              krExpandedIds={krExpandedIds}
+              onToggleKR={onToggleKR}
             />
           ))}
 
-          {hasKRs && (
-            <div className="space-y-1.5 pt-0.5">
+          {hasKRs && krOpen && (
+            <div className={`space-y-1.5 ${hasChildren ? "rounded-lg border border-border/60 bg-muted/30 p-2 mt-1.5" : "pt-0.5"}`}>
               {hasChildren && (
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Key Results
                 </span>
               )}
+
               {node.keyResults.map((kr) => {
                 const progress = kr.target_value > 0 ? Math.round((kr.current_value / kr.target_value) * 100) : 0;
                 return (
