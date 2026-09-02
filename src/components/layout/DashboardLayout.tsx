@@ -32,7 +32,7 @@ export default function DashboardLayout() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8 animate-slide-up">
+          <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden p-4 md:p-6 lg:p-8 animate-slide-up">
             <Outlet />
           </main>
         </div>
